@@ -1,6 +1,9 @@
-import { prisma } from "../../lib/prisma.js";
-export const getEmployeeProfile = async (userId) => {
-    return prisma.user.findUnique({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getMyExpenses = exports.getEmployeeProfile = void 0;
+const prisma_js_1 = require("../../lib/prisma.js");
+const getEmployeeProfile = async (userId) => {
+    return prisma_js_1.prisma.user.findUnique({
         where: {
             id: userId,
         },
@@ -18,8 +21,9 @@ export const getEmployeeProfile = async (userId) => {
         },
     });
 };
-export const getMyExpenses = async (userId) => {
-    return prisma.expense.findMany({
+exports.getEmployeeProfile = getEmployeeProfile;
+const getMyExpenses = async (userId) => {
+    return prisma_js_1.prisma.expense.findMany({
         where: {
             employeeId: userId,
         },
@@ -33,3 +37,4 @@ export const getMyExpenses = async (userId) => {
         },
     });
 };
+exports.getMyExpenses = getMyExpenses;

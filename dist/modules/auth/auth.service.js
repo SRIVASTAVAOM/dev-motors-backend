@@ -1,8 +1,14 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { prisma } from "../../lib/prisma.js";
-export const loginUser = async ({ employeeId, password, }) => {
-    const user = await prisma.user.findUnique({
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.loginUser = void 0;
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const prisma_js_1 = require("../../lib/prisma.js");
+const loginUser = async ({ employeeId, password, }) => {
+    const user = await prisma_js_1.prisma.user.findUnique({
         where: {
             employeeId,
         },
@@ -16,7 +22,7 @@ export const loginUser = async ({ employeeId, password, }) => {
     if (user.status !== "ACTIVE") {
         throw new Error("Your account is inactive");
     }
-    const passwordMatched = await bcrypt.compare(password, user.passwordHash);
+    const passwordMatched = await bcryptjs_1.default.compare(password, user.passwordHash);
     if (!passwordMatched) {
         throw new Error("Invalid employee ID or password");
     }
@@ -24,7 +30,7 @@ export const loginUser = async ({ employeeId, password, }) => {
     if (!jwtSecret) {
         throw new Error("JWT_SECRET is not configured");
     }
-    const token = jwt.sign({
+    const token = jsonwebtoken_1.default.sign({
         userId: user.id,
         employeeId: user.employeeId,
         role: user.role,
@@ -45,3 +51,4 @@ export const loginUser = async ({ employeeId, password, }) => {
         },
     };
 };
+exports.loginUser = loginUser;

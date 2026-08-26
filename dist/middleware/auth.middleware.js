@@ -1,5 +1,11 @@
-import jwt from "jsonwebtoken";
-export const authenticate = (req, res, next) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.requireRole = exports.authenticate = void 0;
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const authenticate = (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader) {
@@ -22,7 +28,7 @@ export const authenticate = (req, res, next) => {
                 message: "JWT_SECRET is not configured",
             });
         }
-        const decoded = jwt.verify(token, jwtSecret);
+        const decoded = jsonwebtoken_1.default.verify(token, jwtSecret);
         req.user = decoded;
         next();
     }
@@ -33,7 +39,8 @@ export const authenticate = (req, res, next) => {
         });
     }
 };
-export const requireRole = (...allowedRoles) => {
+exports.authenticate = authenticate;
+const requireRole = (...allowedRoles) => {
     return (req, res, next) => {
         if (!req.user) {
             return res.status(401).json({
@@ -50,3 +57,4 @@ export const requireRole = (...allowedRoles) => {
         next();
     };
 };
+exports.requireRole = requireRole;

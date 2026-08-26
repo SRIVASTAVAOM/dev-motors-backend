@@ -1,4 +1,7 @@
-import { prisma } from "../../lib/prisma.js";
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.processApproval = exports.getPendingApprovals = void 0;
+const prisma_js_1 = require("../../lib/prisma.js");
 /**
  * Workflow:
  *
@@ -12,8 +15,8 @@ import { prisma } from "../../lib/prisma.js";
  *    ↓ APPROVE
  * FINAL APPROVED
  */
-export const getPendingApprovals = async (userId) => {
-    const user = await prisma.user.findUnique({
+const getPendingApprovals = async (userId) => {
+    const user = await prisma_js_1.prisma.user.findUnique({
         where: { id: userId },
         select: {
             id: true,
@@ -29,7 +32,7 @@ export const getPendingApprovals = async (userId) => {
         throw new Error("User account is inactive");
     }
     if (user.role === "OWNER") {
-        return prisma.expenseApproval.findMany({
+        return prisma_js_1.prisma.expenseApproval.findMany({
             where: {
                 approverId: user.id,
                 status: "PENDING",
@@ -68,7 +71,7 @@ export const getPendingApprovals = async (userId) => {
     if (user.role !== "MANAGER" && user.role !== "CASHIER") {
         throw new Error("Only managers, owners and cashiers can view approvals");
     }
-    return prisma.expenseApproval.findMany({
+    return prisma_js_1.prisma.expenseApproval.findMany({
         where: {
             approverId: user.id,
             status: "PENDING",
@@ -104,8 +107,9 @@ export const getPendingApprovals = async (userId) => {
         },
     });
 };
-export const processApproval = async (approvalId, actorId, action, remarks) => {
-    const actor = await prisma.user.findUnique({
+exports.getPendingApprovals = getPendingApprovals;
+const processApproval = async (approvalId, actorId, action, remarks) => {
+    const actor = await prisma_js_1.prisma.user.findUnique({
         where: { id: actorId },
         select: {
             id: true,
@@ -127,7 +131,7 @@ export const processApproval = async (approvalId, actorId, action, remarks) => {
         actor.role !== "CASHIER") {
         throw new Error("You are not authorized to process expenses");
     }
-    const approval = await prisma.expenseApproval.findUnique({
+    const approval = await prisma_js_1.prisma.expenseApproval.findUnique({
         where: {
             id: approvalId,
         },
@@ -176,7 +180,7 @@ export const processApproval = async (approvalId, actorId, action, remarks) => {
     // REJECTION
     // ----------------------------------------------------------
     if (action === "REJECT") {
-        return prisma.$transaction(async (tx) => {
+        return prisma_js_1.prisma.$transaction(async (tx) => {
             const updatedApproval = await tx.expenseApproval.update({
                 where: {
                     id: approvalId,
@@ -251,7 +255,7 @@ export const processApproval = async (approvalId, actorId, action, remarks) => {
     // ----------------------------------------------------------
     // APPROVAL
     // ----------------------------------------------------------
-    return prisma.$transaction(async (tx) => {
+    return prisma_js_1.prisma.$transaction(async (tx) => {
         const currentApproval = await tx.expenseApproval.findUnique({
             where: {
                 id: approvalId,
@@ -467,3 +471,4 @@ export const processApproval = async (approvalId, actorId, action, remarks) => {
         throw new Error("Invalid approval stage");
     });
 };
+exports.processApproval = processApproval;

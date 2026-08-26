@@ -151,7 +151,7 @@ export const createExpense = async (data: CreateExpenseInput) => {
         locationId: data.locationId,
         categoryId: data.categoryId,
         amount: data.amount,
-        description: data.description,
+        description: data.description || "Expense Claim",
         expenseDate: data.expenseDate,
         receiptUrl: data.receiptUrl,
         receiptFileName: data.receiptFileName,

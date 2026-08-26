@@ -1,5 +1,8 @@
-import { getEmployeeProfile, getMyExpenses, } from "./employee.service.js";
-export const getMyProfile = async (req, res) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getMyExpensesController = exports.getMyProfile = void 0;
+const employee_service_js_1 = require("./employee.service.js");
+const getMyProfile = async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({
@@ -7,7 +10,7 @@ export const getMyProfile = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        const employee = await getEmployeeProfile(req.user.userId);
+        const employee = await (0, employee_service_js_1.getEmployeeProfile)(req.user.userId);
         if (!employee) {
             return res.status(404).json({
                 success: false,
@@ -27,7 +30,8 @@ export const getMyProfile = async (req, res) => {
         });
     }
 };
-export const getMyExpensesController = async (req, res) => {
+exports.getMyProfile = getMyProfile;
+const getMyExpensesController = async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({
@@ -35,7 +39,7 @@ export const getMyExpensesController = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        const expenses = await getMyExpenses(req.user.userId);
+        const expenses = await (0, employee_service_js_1.getMyExpenses)(req.user.userId);
         return res.status(200).json({
             success: true,
             count: expenses.length,
@@ -50,3 +54,4 @@ export const getMyExpensesController = async (req, res) => {
         });
     }
 };
+exports.getMyExpensesController = getMyExpensesController;

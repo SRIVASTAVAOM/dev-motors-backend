@@ -1,67 +1,120 @@
-import { prisma } from '../../config/database.js';
-export const createExpense = async (req, res) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteExpense = exports.getExpenseTimeline = exports.getTimeline = exports.approveExpense = exports.processApproval = exports.getCategories = exports.getExpenses = exports.getMyExpenses = exports.createExpense = exports.addExpense = void 0;
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
+const addExpense = async (req, res) => {
     try {
-        const { categoryId, amount, description, expenseDate } = req.body;
-        const currentUserId = req.user?.userId;
-        let user = null;
-        if (currentUserId) {
-            user = await prisma.user.findFirst({ where: { id: currentUserId }, include: { location: true } });
+        const authUser = req.user;
+        const { amount, description, categoryId, receiptFileName, expenseDate } = req.body;
+        if (!amount || !description) {
+            return res.status(400).json({ success: false, message: 'Amount and description are required' });
         }
-        let activeLocationId = user?.locationId;
-        if (!activeLocationId) {
-            const defaultLoc = await prisma.location.findFirst();
-            activeLocationId = defaultLoc?.id;
+        // 1. Fetch exact user from DB
+        let dbUser = null;
+        const searchId = authUser?.userId || authUser?.id;
+        const searchEmpCode = authUser?.employeeId;
+        if (searchId) {
+            dbUser = await prisma.user.findUnique({ where: { id: searchId } });
         }
-        let cat = await prisma.expenseCategory.findFirst({
-            where: {
-                OR: [
-                    { id: categoryId },
-                    { name: { equals: categoryId, mode: 'insensitive' } }
-                ]
-            }
-        }).catch(() => null);
-        if (!cat) {
-            cat = await prisma.expenseCategory.findFirst().catch(() => null);
+        if (!dbUser && searchEmpCode) {
+            dbUser = await prisma.user.findUnique({ where: { employeeId: searchEmpCode } });
         }
+        if (!dbUser) {
+            dbUser = await prisma.user.findFirst({ where: { role: 'EMPLOYEE' } });
+        }
+        if (!dbUser) {
+            return res.status(400).json({ success: false, message: 'Valid employee account not found in database' });
+        }
+        // 2. Resolve Category
+        let dbCategory = null;
+        if (categoryId) {
+            dbCategory = await prisma.expenseCategory.findFirst({
+                where: {
+                    OR: [
+                        { id: categoryId },
+                        { name: { equals: categoryId, mode: 'insensitive' } },
+                    ],
+                },
+            });
+        }
+        if (!dbCategory) {
+            dbCategory = await prisma.expenseCategory.findFirst();
+        }
+        if (!dbCategory) {
+            dbCategory = await prisma.expenseCategory.create({
+                data: {
+                    name: 'General Expenses',
+                },
+            });
+        }
+        // 3. Resolve Location
+        let targetLocationId = dbUser.locationId;
+        if (!targetLocationId) {
+            const firstLoc = await prisma.location.findFirst();
+            targetLocationId = firstLoc?.id ?? null;
+        }
+        // 4. Create Expense Record
         const newExpense = await prisma.expense.create({
             data: {
-                amount: parseFloat(amount) || 0.0,
-                description: description || 'Operational Expense',
-                expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
+                amount: parseFloat(amount),
+                description,
                 status: 'PENDING_MANAGER',
+                expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
+                receiptFileName: receiptFileName || 'receipt.jpg',
                 receiptUrl: 'https://devmotors-assets.s3.amazonaws.com/receipts/bill.png',
-                receiptFileName: 'bill_receipt_proof.jpg',
-                employeeId: user ? user.id : '4b981a1f-e125-4916-8041-a4f427cbc7f9',
-                locationId: activeLocationId,
-                categoryId: cat ? cat.id : categoryId,
+                employeeId: dbUser.id,
+                locationId: targetLocationId,
+                categoryId: dbCategory.id,
             },
             include: {
                 category: true,
-                employee: true,
                 location: true,
-            }
+                employee: {
+                    select: { id: true, name: true, employeeId: true, role: true },
+                },
+            },
         });
         return res.status(201).json({
             success: true,
-            message: 'Expense created successfully',
-            data: newExpense
+            message: 'Expense claim created successfully',
+            data: newExpense,
         });
     }
     catch (error) {
         console.error('Create Expense Error:', error);
-        return res.status(500).json({ success: false, message: error.message || 'Failed to create expense' });
+        return res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
     }
 };
-export const addExpense = createExpense;
-export const getExpenses = async (req, res) => {
+exports.addExpense = addExpense;
+exports.createExpense = exports.addExpense;
+const getMyExpenses = async (req, res) => {
     try {
+        const authUser = req.user;
+        const searchId = authUser?.userId || authUser?.id;
+        const role = (authUser?.role || '').toUpperCase();
+        let whereClause = {};
+        if (role === 'EMPLOYEE' && searchId) {
+            const dbUser = await prisma.user.findFirst({
+                where: { OR: [{ id: searchId }, { employeeId: authUser?.employeeId }] },
+            });
+            if (dbUser) {
+                whereClause.employeeId = dbUser.id;
+            }
+        }
+        else if (role === 'MANAGER' && authUser?.locationId) {
+            whereClause.locationId = authUser.locationId;
+        }
         const expenses = await prisma.expense.findMany({
-            orderBy: { createdAt: 'desc' },
+            where: whereClause,
             include: {
                 category: true,
-                employee: true,
                 location: true,
-            }
+                employee: {
+                    select: { id: true, name: true, employeeId: true, role: true },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
         });
         return res.status(200).json({ success: true, data: expenses });
     }
@@ -69,11 +122,12 @@ export const getExpenses = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
-export const getMyExpenses = getExpenses;
-export const getCategories = async (req, res) => {
+exports.getMyExpenses = getMyExpenses;
+exports.getExpenses = exports.getMyExpenses;
+const getCategories = async (_req, res) => {
     try {
         const categories = await prisma.expenseCategory.findMany({
-            where: { isActive: true }
+            orderBy: { name: 'asc' },
         });
         return res.status(200).json({ success: true, data: categories });
     }
@@ -81,67 +135,64 @@ export const getCategories = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
-export const processApproval = async (req, res) => {
+exports.getCategories = getCategories;
+const processApproval = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { action, amount, remarks } = req.body;
-        let targetStatus = 'PENDING_MANAGER';
-        if (action === 'MANAGER_APPROVE' || action === 'FORWARD_FINANCE') {
-            targetStatus = 'PENDING_FINANCE';
-        }
-        else if (action === 'CASHIER_APPROVE' || action === 'FORWARD_OWNER') {
-            targetStatus = 'PENDING_OWNER';
-        }
-        else if (action === 'OWNER_FINAL_APPROVE' || action === 'PAID' || action === 'APPROVE') {
-            targetStatus = 'PAID';
-        }
-        else if (action === 'REJECT') {
-            targetStatus = 'REJECTED';
-        }
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        const { action, amount } = req.body;
+        let newStatus = 'APPROVED';
+        if (action === 'REJECT')
+            newStatus = 'REJECTED';
+        else if (action === 'PAY')
+            newStatus = 'PAID';
         const updated = await prisma.expense.update({
-            where: { id: id },
+            where: { id },
             data: {
-                status: targetStatus,
+                status: newStatus,
                 ...(amount ? { amount: parseFloat(amount) } : {}),
             },
-            include: {
-                category: true,
-                employee: true,
-                location: true,
-            }
         });
-        return res.status(200).json({
-            success: true,
-            message: `Expense status changed to ${targetStatus}`,
-            data: updated
-        });
+        return res.status(200).json({ success: true, data: updated });
     }
     catch (error) {
-        console.error('Approval Error:', error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
-export const deleteExpense = async (req, res) => {
+exports.processApproval = processApproval;
+exports.approveExpense = exports.processApproval;
+const getTimeline = async (req, res) => {
     try {
-        const { id } = req.params;
-        await prisma.auditLog?.deleteMany({ where: { expenseId: id } }).catch(() => { });
-        await prisma.expense.delete({ where: { id: id } });
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        const expense = await prisma.expense.findUnique({
+            where: { id },
+            include: {
+                employee: true,
+            },
+        });
+        const timeline = [
+            {
+                title: 'Expense Claim Submitted',
+                description: `Submitted by ${expense?.employee?.name ?? 'Employee'}`,
+                timestamp: expense?.createdAt ?? new Date(),
+                status: 'SUBMITTED',
+            },
+        ];
+        return res.status(200).json({ success: true, data: timeline });
+    }
+    catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+exports.getTimeline = getTimeline;
+exports.getExpenseTimeline = exports.getTimeline;
+const deleteExpense = async (req, res) => {
+    try {
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        await prisma.expense.delete({ where: { id } });
         return res.status(200).json({ success: true, message: 'Expense deleted successfully' });
     }
     catch (error) {
-        return res.status(500).json({ success: false, message: error.message || 'Failed to delete expense' });
-    }
-};
-export const getTimeline = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const logs = await prisma.auditLog?.findMany({
-            where: { expenseId: id },
-            orderBy: { createdAt: 'asc' },
-        }).catch(() => []) || [];
-        return res.status(200).json({ success: true, data: logs });
-    }
-    catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+exports.deleteExpense = deleteExpense;

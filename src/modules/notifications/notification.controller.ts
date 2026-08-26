@@ -25,7 +25,7 @@ export const getNotifications = async (
       await getMyNotifications(req.user.userId);
 
     const unreadCount = notifications.filter(
-      (notification) => !notification.isRead
+      (notification: any) => !notification.isRead
     ).length;
 
     return res.status(200).json({

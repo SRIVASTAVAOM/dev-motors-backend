@@ -1,5 +1,8 @@
-import { getPendingApprovals, processApproval, } from "./approval.service.js";
-export const getMyPendingApprovals = async (req, res) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.processExpenseApproval = exports.getMyPendingApprovals = void 0;
+const approval_service_js_1 = require("./approval.service.js");
+const getMyPendingApprovals = async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({
@@ -7,7 +10,7 @@ export const getMyPendingApprovals = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        const approvals = await getPendingApprovals(req.user.userId);
+        const approvals = await (0, approval_service_js_1.getPendingApprovals)(req.user.userId);
         return res.status(200).json({
             success: true,
             count: approvals.length,
@@ -22,7 +25,8 @@ export const getMyPendingApprovals = async (req, res) => {
         });
     }
 };
-export const processExpenseApproval = async (req, res) => {
+exports.getMyPendingApprovals = getMyPendingApprovals;
+const processExpenseApproval = async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({
@@ -55,7 +59,7 @@ export const processExpenseApproval = async (req, res) => {
                 message: "Action must be APPROVE or REJECT",
             });
         }
-        const result = await processApproval(approvalId, req.user.userId, action, remarks);
+        const result = await (0, approval_service_js_1.processApproval)(approvalId, req.user.userId, action, remarks);
         return res.status(200).json({
             success: true,
             message: action === "APPROVE"
@@ -75,3 +79,4 @@ export const processExpenseApproval = async (req, res) => {
         });
     }
 };
+exports.processExpenseApproval = processExpenseApproval;

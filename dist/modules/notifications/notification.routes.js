@@ -1,7 +1,9 @@
-import { Router } from "express";
-import { getNotifications, markAsRead, } from "./notification.controller.js";
-import { authenticate, } from "../../middleware/auth.middleware.js";
-const router = Router();
-router.get("/", authenticate, getNotifications);
-router.patch("/:notificationId/read", authenticate, markAsRead);
-export default router;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const notification_controller_js_1 = require("./notification.controller.js");
+const auth_middleware_js_1 = require("../../middleware/auth.middleware.js");
+const router = (0, express_1.Router)();
+router.get("/", auth_middleware_js_1.authenticate, notification_controller_js_1.getNotifications);
+router.patch("/:notificationId/read", auth_middleware_js_1.authenticate, notification_controller_js_1.markAsRead);
+exports.default = router;

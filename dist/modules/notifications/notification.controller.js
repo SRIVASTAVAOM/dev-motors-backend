@@ -1,5 +1,8 @@
-import { getMyNotifications, markNotificationAsRead, } from "./notification.service.js";
-export const getNotifications = async (req, res) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.markAsRead = exports.getNotifications = void 0;
+const notification_service_js_1 = require("./notification.service.js");
+const getNotifications = async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({
@@ -7,7 +10,7 @@ export const getNotifications = async (req, res) => {
                 message: "Authentication required",
             });
         }
-        const notifications = await getMyNotifications(req.user.userId);
+        const notifications = await (0, notification_service_js_1.getMyNotifications)(req.user.userId);
         const unreadCount = notifications.filter((notification) => !notification.isRead).length;
         return res.status(200).json({
             success: true,
@@ -24,7 +27,8 @@ export const getNotifications = async (req, res) => {
         });
     }
 };
-export const markAsRead = async (req, res) => {
+exports.getNotifications = getNotifications;
+const markAsRead = async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({
@@ -41,7 +45,7 @@ export const markAsRead = async (req, res) => {
             });
         }
         const notificationId = notificationIdParam;
-        const notification = await markNotificationAsRead(notificationId, req.user.userId);
+        const notification = await (0, notification_service_js_1.markNotificationAsRead)(notificationId, req.user.userId);
         return res.status(200).json({
             success: true,
             message: "Notification marked as read",
@@ -59,3 +63,4 @@ export const markAsRead = async (req, res) => {
         });
     }
 };
+exports.markAsRead = markAsRead;

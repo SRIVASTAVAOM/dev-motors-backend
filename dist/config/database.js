@@ -1,10 +1,9 @@
-import pg from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
-import dotenv from 'dotenv';
-dotenv.config();
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/dev_motors';
-const pool = new pg.Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-export const prisma = new PrismaClient({ adapter });
-export default prisma;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.prisma = void 0;
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient({
+    log: ['error', 'warn'],
+});
+exports.prisma = prisma;
+exports.default = prisma;

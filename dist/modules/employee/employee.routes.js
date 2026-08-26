@@ -1,8 +1,10 @@
-import { Router } from "express";
-import { getMyProfile, } from "./employee.controller.js";
-import { authenticate, } from "../../middleware/auth.middleware.js";
-import { getMyExpensesController, } from "./employee.controller.js";
-const router = Router();
-router.get("/me", authenticate, getMyProfile);
-router.get("/me/expenses", authenticate, getMyExpensesController);
-export default router;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const employee_controller_js_1 = require("./employee.controller.js");
+const auth_middleware_js_1 = require("../../middleware/auth.middleware.js");
+const employee_controller_js_2 = require("./employee.controller.js");
+const router = (0, express_1.Router)();
+router.get("/me", auth_middleware_js_1.authenticate, employee_controller_js_1.getMyProfile);
+router.get("/me/expenses", auth_middleware_js_1.authenticate, employee_controller_js_2.getMyExpensesController);
+exports.default = router;

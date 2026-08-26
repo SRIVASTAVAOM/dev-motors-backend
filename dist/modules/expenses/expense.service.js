@@ -1,6 +1,9 @@
-import { prisma } from "../../lib/prisma.js";
-export const getExpenseCategories = async () => {
-    return prisma.expenseCategory.findMany({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getExpenseTimeline = exports.editExpenseAmount = exports.createExpense = exports.getExpenses = exports.getExpenseCategories = void 0;
+const prisma_js_1 = require("../../lib/prisma.js");
+const getExpenseCategories = async () => {
+    return prisma_js_1.prisma.expenseCategory.findMany({
         where: {
             isActive: true,
         },
@@ -14,8 +17,9 @@ export const getExpenseCategories = async () => {
         },
     });
 };
-export const getExpenses = async (userId) => {
-    const user = await prisma.user.findUnique({
+exports.getExpenseCategories = getExpenseCategories;
+const getExpenses = async (userId) => {
+    const user = await prisma_js_1.prisma.user.findUnique({
         where: { id: userId },
         select: {
             id: true,
@@ -40,7 +44,7 @@ export const getExpenses = async (userId) => {
             : {
                 employeeId: user.id,
             };
-    return prisma.expense.findMany({
+    return prisma_js_1.prisma.expense.findMany({
         where,
         include: {
             category: {
@@ -72,8 +76,9 @@ export const getExpenses = async (userId) => {
         },
     });
 };
-export const createExpense = async (data) => {
-    const actor = await prisma.user.findUnique({
+exports.getExpenses = getExpenses;
+const createExpense = async (data) => {
+    const actor = await prisma_js_1.prisma.user.findUnique({
         where: { id: data.employeeId },
         select: {
             id: true,
@@ -101,7 +106,7 @@ export const createExpense = async (data) => {
     if (!actor.managerId) {
         throw new Error("No manager is assigned to this employee");
     }
-    const location = await prisma.location.findFirst({
+    const location = await prisma_js_1.prisma.location.findFirst({
         where: {
             id: data.locationId,
             isActive: true,
@@ -110,14 +115,14 @@ export const createExpense = async (data) => {
     if (!location) {
         throw new Error("Invalid or inactive location");
     }
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma_js_1.prisma.$transaction(async (tx) => {
         const expense = await tx.expense.create({
             data: {
                 employeeId: data.employeeId,
                 locationId: data.locationId,
                 categoryId: data.categoryId,
                 amount: data.amount,
-                description: data.description,
+                description: data.description || "Expense Claim",
                 expenseDate: data.expenseDate,
                 receiptUrl: data.receiptUrl,
                 receiptFileName: data.receiptFileName,
@@ -193,8 +198,9 @@ export const createExpense = async (data) => {
     });
     return result;
 };
-export const editExpenseAmount = async (expenseId, ownerId, newAmount, remarks) => {
-    const owner = await prisma.user.findUnique({
+exports.createExpense = createExpense;
+const editExpenseAmount = async (expenseId, ownerId, newAmount, remarks) => {
+    const owner = await prisma_js_1.prisma.user.findUnique({
         where: { id: ownerId },
         select: {
             role: true,
@@ -210,7 +216,7 @@ export const editExpenseAmount = async (expenseId, ownerId, newAmount, remarks) 
     if (!Number.isFinite(newAmount) || newAmount < 0) {
         throw new Error("Invalid amount");
     }
-    return prisma.$transaction(async (tx) => {
+    return prisma_js_1.prisma.$transaction(async (tx) => {
         const expense = await tx.expense.findUnique({
             where: { id: expenseId },
         });
@@ -258,8 +264,9 @@ export const editExpenseAmount = async (expenseId, ownerId, newAmount, remarks) 
         return updated;
     });
 };
-export const getExpenseTimeline = async (expenseId) => {
-    return prisma.expenseAudit.findMany({
+exports.editExpenseAmount = editExpenseAmount;
+const getExpenseTimeline = async (expenseId) => {
+    return prisma_js_1.prisma.expenseAudit.findMany({
         where: {
             expenseId,
         },
@@ -277,3 +284,4 @@ export const getExpenseTimeline = async (expenseId) => {
         },
     });
 };
+exports.getExpenseTimeline = getExpenseTimeline;
