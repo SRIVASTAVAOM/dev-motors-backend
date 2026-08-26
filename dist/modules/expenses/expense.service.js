@@ -1,4 +1,19 @@
 import { prisma } from "../../lib/prisma.js";
+export const getExpenseCategories = async () => {
+    return prisma.expenseCategory.findMany({
+        where: {
+            isActive: true,
+        },
+        select: {
+            id: true,
+            name: true,
+            description: true,
+        },
+        orderBy: {
+            name: "asc",
+        },
+    });
+};
 export const getExpenses = async (userId) => {
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -6,6 +21,7 @@ export const getExpenses = async (userId) => {
             id: true,
             role: true,
             locationId: true,
+            managerId: true,
             status: true,
         },
     });
@@ -17,7 +33,7 @@ export const getExpenses = async (userId) => {
     }
     const where = user.role === "OWNER"
         ? {}
-        : user.role === "MANAGER"
+        : user.role === "MANAGER" || user.role === "CASHIER"
             ? {
                 locationId: user.locationId ?? undefined,
             }
@@ -63,6 +79,7 @@ export const createExpense = async (data) => {
             id: true,
             role: true,
             locationId: true,
+            managerId: true,
             status: true,
         },
     });
@@ -72,12 +89,17 @@ export const createExpense = async (data) => {
     if (actor.status !== "ACTIVE") {
         throw new Error("User account is inactive");
     }
-    // OWNER can create expenses for any active location.
-    // All other roles can create expenses only for their own location.
-    if (actor.role !== "OWNER") {
-        if (!actor.locationId || actor.locationId !== data.locationId) {
-            throw new Error("You can only create expenses for your assigned location");
-        }
+    // Only employees submit normal expenses.
+    if (actor.role !== "EMPLOYEE") {
+        throw new Error("Only employees can create expenses");
+    }
+    // Employee can only submit for their own assigned location.
+    if (!actor.locationId || actor.locationId !== data.locationId) {
+        throw new Error("You can only create expenses for your assigned location");
+    }
+    // The employee must already belong to a manager.
+    if (!actor.managerId) {
+        throw new Error("No manager is assigned to this employee");
     }
     const location = await prisma.location.findFirst({
         where: {
@@ -101,22 +123,26 @@ export const createExpense = async (data) => {
                 receiptFileName: data.receiptFileName,
                 receiptMimeType: data.receiptMimeType,
                 receiptSize: data.receiptSize,
-                status: "PENDING",
+                status: "PENDING_MANAGER",
             },
         });
-        // Assign approval to the active Manager of the expense location.
-        const manager = await tx.user.findFirst({
+        // Assign approval to the employee's assigned manager.
+        const manager = await tx.user.findUnique({
             where: {
-                locationId: data.locationId,
-                role: "MANAGER",
-                status: "ACTIVE",
+                id: actor.managerId,
             },
             select: {
                 id: true,
+                role: true,
+                locationId: true,
+                status: true,
             },
         });
-        if (!manager) {
-            throw new Error("No active manager found for this expense location");
+        if (!manager ||
+            manager.role !== "MANAGER" ||
+            manager.status !== "ACTIVE" ||
+            manager.locationId !== data.locationId) {
+            throw new Error("No valid manager is assigned to this employee's location");
         }
         await tx.expenseApproval.create({
             data: {

@@ -11,7 +11,6 @@ export const createExpense = async (req: Request, res: Response) => {
       user = await prisma.user.findFirst({ where: { id: currentUserId }, include: { location: true } });
     }
 
-    // Default fallback to first active location if not set
     let activeLocationId = user?.locationId;
     if (!activeLocationId) {
       const defaultLoc = await prisma.location.findFirst();
@@ -110,7 +109,7 @@ export const processApproval = async (req: Request, res: Response) => {
     }
 
     const updated = await prisma.expense.update({
-      where: { id },
+      where: { id: id as string },
       data: {
         status: targetStatus,
         ...(amount ? { amount: parseFloat(amount) } : {}),
@@ -136,8 +135,8 @@ export const processApproval = async (req: Request, res: Response) => {
 export const deleteExpense = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.auditLog.deleteMany({ where: { expenseId: id } }).catch(() => {});
-    await prisma.expense.delete({ where: { id } });
+    await (prisma as any).auditLog?.deleteMany({ where: { expenseId: id as string } }).catch(() => {});
+    await prisma.expense.delete({ where: { id: id as string } });
     return res.status(200).json({ success: true, message: 'Expense deleted successfully' });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message || 'Failed to delete expense' });
@@ -147,10 +146,10 @@ export const deleteExpense = async (req: Request, res: Response) => {
 export const getTimeline = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const logs = await prisma.auditLog.findMany({
-      where: { expenseId: id },
+    const logs = await (prisma as any).auditLog?.findMany({
+      where: { expenseId: id as string },
       orderBy: { createdAt: 'asc' },
-    }).catch(() => []);
+    }).catch(() => []) || [];
     return res.status(200).json({ success: true, data: logs });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
