@@ -1,12 +1,15 @@
 import { Router } from 'express';
-import { login, register, forgotPassword, updateProfile } from './auth.controller.js';
+import { login, forgotPassword } from './auth.controller';
+import { createUserByOwner, listAllStaff } from './user_management.controller';
+import { authenticateToken } from '../../middleware/auth.middleware';
 
 const router = Router();
 
 router.post('/login', login);
-router.post('/register', register);
 router.post('/forgot-password', forgotPassword);
-router.post('/update-profile', updateProfile);
-router.put('/update-profile', updateProfile);
+
+// Owner-Only Staff Management
+router.post('/users/create', authenticateToken, createUserByOwner);
+router.get('/users/all', authenticateToken, listAllStaff);
 
 export default router;
