@@ -1,0 +1,105 @@
+import "dotenv/config";
+import bcrypt from "bcryptjs";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not defined");
+}
+
+const adapter = new PrismaPg({
+  connectionString,
+});
+
+const prisma = new PrismaClient({
+  adapter,
+});
+
+async function main() {
+  console.log("🌱 Seeding users...");
+
+  const employeePassword = await bcrypt.hash("12345678", 10);
+  const managerPassword = await bcrypt.hash("manager123", 10);
+  const adminPassword = await bcrypt.hash("admin123", 10);
+
+  const manager = await prisma.user.upsert({
+    where: {
+      employeeId: "MGR001",
+    },
+    update: {
+      name: "Test Manager",
+      email: "manager@devmotors.com",
+      passwordHash: managerPassword,
+      role: "MANAGER",
+      status: "ACTIVE",
+    },
+    create: {
+      employeeId: "MGR001",
+      name: "Test Manager",
+      email: "manager@devmotors.com",
+      passwordHash: managerPassword,
+      role: "MANAGER",
+      status: "ACTIVE",
+    },
+  });
+
+  await prisma.user.upsert({
+    where: {
+      employeeId: "EMP001",
+    },
+    update: {
+      name: "Test Employee",
+      email: "employee@devmotors.com",
+      passwordHash: employeePassword,
+      role: "EMPLOYEE",
+      status: "ACTIVE",
+      managerId: manager.id,
+    },
+    create: {
+      employeeId: "EMP001",
+      name: "Test Employee",
+      email: "employee@devmotors.com",
+      passwordHash: employeePassword,
+      role: "EMPLOYEE",
+      status: "ACTIVE",
+      managerId: manager.id,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: {
+      employeeId: "ADM001",
+    },
+    update: {
+      name: "Test Admin",
+      email: "admin@devmotors.com",
+      passwordHash: adminPassword,
+      role: "ADMIN",
+      status: "ACTIVE",
+    },
+    create: {
+      employeeId: "ADM001",
+      name: "Test Admin",
+      email: "admin@devmotors.com",
+      passwordHash: adminPassword,
+      role: "ADMIN",
+      status: "ACTIVE",
+    },
+  });
+
+  console.log("✅ Users seeded successfully");
+  console.log("Employee: EMP001 / 12345678");
+  console.log("Manager:  MGR001 / manager123");
+  console.log("Admin:    ADM001 / admin123");
+}
+
+main()
+  .catch((error) => {
+    console.error("❌ Seed failed:", error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

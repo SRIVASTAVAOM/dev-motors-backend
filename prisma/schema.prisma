@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  EMPLOYEE
+  MANAGER
+  CASHIER
+  OWNER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ExpenseStatus {
+  PENDING_MANAGER
+  PENDING_OWNER
+  PENDING_CASHIER
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum NotificationType {
+  EXPENSE_SUBMITTED
+  EXPENSE_APPROVED
+  EXPENSE_REJECTED
+  EXPENSE_CANCELLED
+  SYSTEM
+}
+
+model User {
+  id           String     @id @default(uuid())
+  employeeId   String     @unique
+  name         String
+  email        String     @unique
+  phone        String?
+  passwordHash String
+  role         UserRole
+  status       UserStatus @default(ACTIVE)
+  joiningDate  DateTime?
+  profileImage String?
+
+  locationId String?
+  location   Location? @relation("CurrentLocation", fields: [locationId], references: [id])
+
+  managerId String?
+  manager   User?   @relation("ManagerEmployees", fields: [managerId], references: [id])
+
+  employees User[] @relation("ManagerEmployees")
+
+  expenses            Expense[]
+  approvals           ExpenseApproval[]
+  expenseAudits       ExpenseAudit[]
+  notifications       Notification[]
+  locationHistory     LocationHistory[]
+  approvalAssignments ApprovalConfigurationUser[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([locationId])
+  @@index([managerId])
+}
+
+model Location {
+  id           String  @id @default(uuid())
+  locationCode String  @unique
+  name         String
+  address      String?
+  city         String?
+  state        String?
+  isActive     Boolean @default(true)
+
+  employees User[]            @relation("CurrentLocation")
+  history   LocationHistory[]
+  expenses  Expense[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LocationHistory {
+  id         String    @id @default(uuid())
+  userId     String
+  locationId String
+  startDate  DateTime
+  endDate    DateTime?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([locationId])
+}
+
+model ExpenseCategory {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  expenses Expense[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  employeeId  String
+  locationId  String
+  categoryId  String
+  amount      Decimal  @db.Decimal(12, 2)
+  description String?
+  expenseDate DateTime
+
+  receiptUrl      String
+  receiptFileName String?
+  receiptMimeType String?
+  receiptSize     Int?
+
+  status ExpenseStatus @default(PENDING_MANAGER)
+
+  employee User            @relation(fields: [employeeId], references: [id])
+  location Location        @relation(fields: [locationId], references: [id])
+  category ExpenseCategory @relation(fields: [categoryId], references: [id])
+
+  approvals ExpenseApproval[]
+  audits    ExpenseAudit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([locationId])
+  @@index([categoryId])
+  @@index([expenseDate])
+  @@index([status])
+}
+
+model ExpenseApproval {
+  id         String         @id @default(uuid())
+  expenseId  String
+  approverId String
+  status     ApprovalStatus @default(PENDING)
+  remarks    String?
+  approvedAt DateTime?
+  rejectedAt DateTime?
+
+  expense  Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  approver User    @relation(fields: [approverId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([expenseId, approverId])
+  @@index([expenseId])
+  @@index([approverId])
+  @@index([status])
+}
+
+model ExpenseAudit {
+  id        String   @id @default(uuid())
+  expenseId String
+  actorId   String
+  action    String
+  oldAmount Decimal? @db.Decimal(12, 2)
+  newAmount Decimal? @db.Decimal(12, 2)
+  remarks   String?
+  createdAt DateTime @default(now())
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  actor   User    @relation(fields: [actorId], references: [id])
+
+  @@index([expenseId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id      String           @id @default(uuid())
+  userId  String
+  title   String
+  message String
+  type    NotificationType
+  isRead  Boolean          @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model ApprovalConfiguration {
+  id                String  @id @default(uuid())
+  name              String  @unique
+  isActive          Boolean @default(true)
+  requiredApprovals Int     @default(1)
+
+  approvers ApprovalConfigurationUser[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ApprovalConfigurationUser {
+  id              String @id @default(uuid())
+  configurationId String
+  userId          String
+
+  configuration ApprovalConfiguration @relation(fields: [configurationId], references: [id], onDelete: Cascade)
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([configurationId, userId])
+  @@index([userId])
+}

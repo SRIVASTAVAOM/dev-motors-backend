@@ -1,0 +1,10 @@
+import { Router } from "express";
+import { addExpense, getExpensesController, editExpenseAmountController, getExpenseTimelineController, } from "./expense.controller.js";
+import { authenticate } from "../../middleware/auth.middleware.js";
+import { requireRole } from "../../middleware/auth.middleware.js";
+const router = Router();
+router.post("/", authenticate, addExpense);
+router.get("/", authenticate, getExpensesController);
+router.get("/:expenseId/timeline", authenticate, getExpenseTimelineController);
+router.patch("/:expenseId/amount", authenticate, requireRole("OWNER"), editExpenseAmountController);
+export default router;
