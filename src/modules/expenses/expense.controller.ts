@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const createExpense = async (req: Request, res: Response) => {
+export const addExpense = async (req: Request, res: Response) => {
   try {
     const authUser = (req as any).user;
     const { amount, description, categoryId, receiptFileName, expenseDate } = req.body;
@@ -12,7 +12,7 @@ export const createExpense = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Amount and description are required' });
     }
 
-    // 1. Fetch exact user from DB using token identifiers
+    // 1. Fetch exact user from DB
     let dbUser = null;
     const searchId = authUser?.userId || authUser?.id;
     const searchEmpCode = authUser?.employeeId;
@@ -31,7 +31,7 @@ export const createExpense = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Valid employee account not found in database' });
     }
 
-    // 2. Resolve Category (Match by UUID, Name, or fallback)
+    // 2. Resolve Category
     let dbCategory = null;
     if (categoryId) {
       dbCategory = await prisma.expenseCategory.findFirst({
@@ -52,8 +52,6 @@ export const createExpense = async (req: Request, res: Response) => {
       dbCategory = await prisma.expenseCategory.create({
         data: {
           name: 'General Expenses',
-          code: 'GEN',
-          limitAmount: 50000,
         },
       });
     }
@@ -98,7 +96,9 @@ export const createExpense = async (req: Request, res: Response) => {
   }
 };
 
-export const getExpenses = async (req: Request, res: Response) => {
+export const createExpense = addExpense;
+
+export const getMyExpenses = async (req: Request, res: Response) => {
   try {
     const authUser = (req as any).user;
     const searchId = authUser?.userId || authUser?.id;
@@ -107,7 +107,6 @@ export const getExpenses = async (req: Request, res: Response) => {
     let whereClause: any = {};
 
     if (role === 'EMPLOYEE' && searchId) {
-      // Find actual user ID
       const dbUser = await prisma.user.findFirst({
         where: { OR: [{ id: searchId }, { employeeId: authUser?.employeeId }] },
       });
@@ -136,10 +135,11 @@ export const getExpenses = async (req: Request, res: Response) => {
   }
 };
 
+export const getExpenses = getMyExpenses;
+
 export const getCategories = async (_req: Request, res: Response) => {
   try {
     const categories = await prisma.expenseCategory.findMany({
-      where: { isActive: true },
       orderBy: { name: 'asc' },
     });
     return res.status(200).json({ success: true, data: categories });
@@ -148,9 +148,9 @@ export const getCategories = async (_req: Request, res: Response) => {
   }
 };
 
-export const approveExpense = async (req: Request, res: Response) => {
+export const processApproval = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { action, amount } = req.body;
 
     let newStatus: any = 'APPROVED';
@@ -171,9 +171,38 @@ export const approveExpense = async (req: Request, res: Response) => {
   }
 };
 
+export const approveExpense = processApproval;
+
+export const getTimeline = async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const expense = await prisma.expense.findUnique({
+      where: { id },
+      include: {
+        employee: true,
+      },
+    });
+
+    const timeline = [
+      {
+        title: 'Expense Claim Submitted',
+        description: `Submitted by ${expense?.employee?.name ?? 'Employee'}`,
+        timestamp: expense?.createdAt ?? new Date(),
+        status: 'SUBMITTED',
+      },
+    ];
+
+    return res.status(200).json({ success: true, data: timeline });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getExpenseTimeline = getTimeline;
+
 export const deleteExpense = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     await prisma.expense.delete({ where: { id } });
     return res.status(200).json({ success: true, message: 'Expense deleted successfully' });
   } catch (error: any) {
