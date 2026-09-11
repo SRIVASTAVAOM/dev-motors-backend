@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, forgotPassword } from './auth.controller';
+import { login, forgotPassword, updateProfile } from './auth.controller';
 import { createUserByOwner, listAllStaff } from './user_management.controller';
 import { changePassword, resetEmployeePasswordByOwner } from './password.controller';
 import { authenticateToken } from '../../middleware/auth.middleware';
@@ -8,6 +8,10 @@ const router = Router();
 
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);
+
+// Profile Management
+router.post('/update-profile', authenticateToken, updateProfile);
+router.put('/update-profile', authenticateToken, updateProfile);
 
 // Password Management
 router.post('/change-password', authenticateToken, changePassword);
