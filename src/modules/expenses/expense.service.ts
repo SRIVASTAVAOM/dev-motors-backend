@@ -85,6 +85,7 @@ export const getExpenses = async (userId: string) => {
           employeeId: true,
           name: true,
           email: true,
+          role: true,
         },
       },
     },
