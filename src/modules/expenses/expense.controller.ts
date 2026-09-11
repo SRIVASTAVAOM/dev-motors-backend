@@ -181,9 +181,17 @@ export const processApproval = async (req: Request, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { action, amount } = req.body;
 
+    const act = (action || '').toString().toUpperCase().trim();
     let newStatus: any = 'APPROVED';
-    if (action === 'REJECT') newStatus = 'REJECTED';
-    else if (action === 'PAY') newStatus = 'PAID';
+    if (act === 'REJECT') {
+      newStatus = 'REJECTED';
+    } else if (act === 'PAY' || act === 'PAID' || act === 'SETTLE' || act === 'DISBURSE') {
+      newStatus = 'PAID';
+    } else if (act === 'APPROVED_1' || act === 'LEVEL_1') {
+      newStatus = 'APPROVED_1';
+    } else if (act === 'APPROVED_2' || act === 'OWNER_APPROVED') {
+      newStatus = 'APPROVED_2';
+    }
 
     const updated = await prisma.expense.update({
       where: { id },
