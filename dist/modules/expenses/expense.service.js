@@ -68,6 +68,7 @@ const getExpenses = async (userId) => {
                     employeeId: true,
                     name: true,
                     email: true,
+                    role: true,
                 },
             },
         },

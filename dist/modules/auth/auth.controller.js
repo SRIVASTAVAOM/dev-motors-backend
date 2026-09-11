@@ -151,28 +151,39 @@ const forgotPassword = async (req, res) => {
 exports.forgotPassword = forgotPassword;
 const updateProfile = async (req, res) => {
     try {
-        const { employeeId, avatarUrl, name } = req.body;
-        if (!employeeId) {
+        const authUser = req.user;
+        const { employeeId, avatarUrl, profileImage, name, phone, phoneNumber, mobile } = req.body;
+        const targetEmpId = employeeId || authUser?.employeeId;
+        const targetId = authUser?.userId || authUser?.id;
+        if (!targetEmpId && !targetId) {
             return res.status(400).json({ success: false, message: 'Employee ID is required' });
         }
         const user = await database_js_1.prisma.user.findFirst({
-            where: { employeeId: employeeId.trim() }
+            where: {
+                OR: [
+                    ...(targetEmpId ? [{ employeeId: targetEmpId.toString().trim() }] : []),
+                    ...(targetId ? [{ id: targetId }] : []),
+                ],
+            },
         });
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
+        const finalPhone = phone || phoneNumber || mobile;
+        const finalAvatar = avatarUrl !== undefined ? avatarUrl : profileImage;
         const updated = await database_js_1.prisma.user.update({
             where: { id: user.id },
             data: {
                 ...(name ? { name } : {}),
-                ...((avatarUrl !== undefined) ? { avatarUrl } : {})
+                ...(finalAvatar !== undefined ? { avatarUrl: finalAvatar, profileImage: finalAvatar } : {}),
+                ...(finalPhone !== undefined ? { phone: finalPhone } : {}),
             },
-            include: { location: true }
+            include: { location: true },
         });
         return res.status(200).json({
             success: true,
             message: 'Profile updated successfully!',
-            data: updated
+            data: updated,
         });
     }
     catch (error) {
