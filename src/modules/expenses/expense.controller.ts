@@ -1,12 +1,22 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
 export const addExpense = async (req: Request, res: Response) => {
   try {
-    const authUser = (req as any).user;
-    const { amount, description, categoryId, receiptFileName, expenseDate } = req.body;
+    let authUser = (req as any).user;
+    if (!authUser && req.headers.authorization) {
+      try {
+        const parts = req.headers.authorization.split(' ');
+        const token = parts.length === 2 ? parts[1] : parts[0];
+        const jwtSecret = process.env.JWT_SECRET || 'dev_motors_jwt_secret_key_2026';
+        authUser = jwt.verify(token, jwtSecret) as any;
+      } catch (_) {}
+    }
+
+    const { amount, description, categoryId, receiptFileName, receiptUrl, expenseDate, location, locationId, employeeId } = req.body;
 
     if (!amount || !description) {
       return res.status(400).json({ success: false, message: 'Amount and description are required' });
@@ -14,14 +24,19 @@ export const addExpense = async (req: Request, res: Response) => {
 
     // 1. Fetch exact user from DB
     let dbUser = null;
-    const searchId = authUser?.userId || authUser?.id;
-    const searchEmpCode = authUser?.employeeId;
+    const searchId = authUser?.userId || authUser?.id || employeeId;
+    const searchEmpCode = authUser?.employeeId || employeeId;
 
     if (searchId) {
       dbUser = await prisma.user.findUnique({ where: { id: searchId } });
     }
     if (!dbUser && searchEmpCode) {
       dbUser = await prisma.user.findUnique({ where: { employeeId: searchEmpCode } });
+    }
+    if (!dbUser && req.body.employeeName) {
+      dbUser = await prisma.user.findFirst({
+        where: { name: { contains: req.body.employeeName, mode: 'insensitive' } },
+      });
     }
     if (!dbUser) {
       dbUser = await prisma.user.findFirst({ where: { role: 'EMPLOYEE' } });
@@ -57,10 +72,23 @@ export const addExpense = async (req: Request, res: Response) => {
     }
 
     // 3. Resolve Location
-    let targetLocationId = dbUser.locationId;
+    let targetLocationId = locationId || dbUser.locationId;
+    if (!targetLocationId && location) {
+      const foundLoc = await prisma.location.findFirst({
+        where: { name: { contains: location, mode: 'insensitive' } },
+      });
+      if (foundLoc) targetLocationId = foundLoc.id;
+    }
     if (!targetLocationId) {
       const firstLoc = await prisma.location.findFirst();
       targetLocationId = firstLoc?.id ?? null;
+    }
+
+    // Determine initial status based on creator role:
+    // Manager or Cashier claims bypass manager and go directly to OWNER!
+    let initialStatus = 'PENDING_MANAGER';
+    if (dbUser.role === 'MANAGER' || dbUser.role === 'CASHIER' || dbUser.role === 'OWNER') {
+      initialStatus = 'PENDING_OWNER';
     }
 
     // 4. Create Expense Record
@@ -68,10 +96,10 @@ export const addExpense = async (req: Request, res: Response) => {
       data: {
         amount: parseFloat(amount),
         description,
-        status: 'PENDING_MANAGER',
+        status: initialStatus as any,
         expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
         receiptFileName: receiptFileName || 'receipt.jpg',
-        receiptUrl: 'https://devmotors-assets.s3.amazonaws.com/receipts/bill.png',
+        receiptUrl: receiptUrl || 'https://devmotors-assets.s3.amazonaws.com/receipts/bill.png',
         employeeId: dbUser.id,
         locationId: targetLocationId!,
         categoryId: dbCategory.id,

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.requireRole = exports.authenticate = void 0;
+exports.requireRole = exports.authenticateToken = exports.authenticate = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const authenticate = (req, res, next) => {
     try {
@@ -40,6 +40,7 @@ const authenticate = (req, res, next) => {
     }
 };
 exports.authenticate = authenticate;
+exports.authenticateToken = exports.authenticate;
 const requireRole = (...allowedRoles) => {
     return (req, res, next) => {
         if (!req.user) {

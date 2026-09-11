@@ -9,13 +9,14 @@ import {
   deleteExpense,
   getTimeline 
 } from './expense.controller.js';
+import { authenticate } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 
-router.post('/', createExpense);
-router.post('/add', addExpense);
+router.post('/', authenticate, createExpense);
+router.post('/add', authenticate, addExpense);
 router.get('/', getExpenses);
-router.get('/my', getMyExpenses);
+router.get('/my', authenticate, getMyExpenses);
 router.get('/categories', getCategories);
 router.post('/:id/approval', processApproval);
 router.put('/:id/approval', processApproval);

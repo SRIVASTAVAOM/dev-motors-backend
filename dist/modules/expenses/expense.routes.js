@@ -2,11 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const expense_controller_js_1 = require("./expense.controller.js");
+const auth_middleware_js_1 = require("../../middleware/auth.middleware.js");
 const router = (0, express_1.Router)();
-router.post('/', expense_controller_js_1.createExpense);
-router.post('/add', expense_controller_js_1.addExpense);
+router.post('/', auth_middleware_js_1.authenticate, expense_controller_js_1.createExpense);
+router.post('/add', auth_middleware_js_1.authenticate, expense_controller_js_1.addExpense);
 router.get('/', expense_controller_js_1.getExpenses);
-router.get('/my', expense_controller_js_1.getMyExpenses);
+router.get('/my', auth_middleware_js_1.authenticate, expense_controller_js_1.getMyExpenses);
 router.get('/categories', expense_controller_js_1.getCategories);
 router.post('/:id/approval', expense_controller_js_1.processApproval);
 router.put('/:id/approval', expense_controller_js_1.processApproval);

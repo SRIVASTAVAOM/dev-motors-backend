@@ -58,6 +58,8 @@ export const authenticate = (
   }
 };
 
+export const authenticateToken = authenticate;
+
 export const requireRole = (
   ...allowedRoles: Array<"EMPLOYEE" | "MANAGER" | "CASHIER" | "OWNER">
 ) => {
