@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { 
   createExpense, 
   addExpense, 
+  updateExpense,
   getExpenses, 
   getMyExpenses, 
   getCategories, 
@@ -15,6 +16,8 @@ const router = Router();
 
 router.post('/', authenticate, createExpense);
 router.post('/add', authenticate, addExpense);
+router.patch('/:id', authenticate, updateExpense);
+router.put('/:id', authenticate, updateExpense);
 router.get('/', getExpenses);
 router.get('/my', authenticate, getMyExpenses);
 router.get('/categories', getCategories);

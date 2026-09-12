@@ -91,6 +91,8 @@ export const addExpense = async (req: Request, res: Response) => {
       initialStatus = 'PENDING_OWNER';
     }
 
+    const effectiveReceiptUrl = receiptUrl || req.body.receiptImage || 'https://devmotors-assets.s3.amazonaws.com/receipts/bill.png';
+
     // 4. Create Expense Record
     const newExpense = await prisma.expense.create({
       data: {
@@ -99,7 +101,7 @@ export const addExpense = async (req: Request, res: Response) => {
         status: initialStatus as any,
         expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
         receiptFileName: receiptFileName || 'receipt.jpg',
-        receiptUrl: receiptUrl || 'https://devmotors-assets.s3.amazonaws.com/receipts/bill.png',
+        receiptUrl: effectiveReceiptUrl,
         employeeId: dbUser.id,
         locationId: targetLocationId!,
         categoryId: dbCategory.id,
@@ -125,6 +127,49 @@ export const addExpense = async (req: Request, res: Response) => {
 };
 
 export const createExpense = addExpense;
+
+export const updateExpense = async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const { amount, description, categoryId, category, receiptFileName, receiptUrl, receiptImage } = req.body;
+
+    const existing = await prisma.expense.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Expense claim not found' });
+    }
+
+    let targetCatId = categoryId;
+    if (!targetCatId && category) {
+      const cat = await prisma.expenseCategory.findFirst({
+        where: { OR: [{ id: category }, { name: { equals: category, mode: 'insensitive' } }] },
+      });
+      if (cat) targetCatId = cat.id;
+    }
+
+    const updated = await prisma.expense.update({
+      where: { id },
+      data: {
+        ...(amount ? { amount: parseFloat(amount) } : {}),
+        ...(description ? { description } : {}),
+        ...(targetCatId ? { categoryId: targetCatId } : {}),
+        ...(receiptUrl || receiptImage ? { receiptUrl: receiptUrl || receiptImage } : {}),
+        ...(receiptFileName ? { receiptFileName } : {}),
+      },
+      include: {
+        category: true,
+        location: true,
+        employee: {
+          select: { id: true, name: true, employeeId: true, role: true },
+        },
+      },
+    });
+
+    return res.status(200).json({ success: true, message: 'Expense updated successfully', data: updated });
+  } catch (error: any) {
+    console.error('Update Expense Error:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
+  }
+};
 
 export const getMyExpenses = async (req: Request, res: Response) => {
   try {
