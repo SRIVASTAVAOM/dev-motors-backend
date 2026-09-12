@@ -170,20 +170,45 @@ exports.getCategories = getCategories;
 const processApproval = async (req, res) => {
     try {
         const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-        const { action, amount } = req.body;
+        const { action, amount, remarks, comments, reason } = req.body;
+        const authUser = req.user;
+        const userRole = (authUser?.role || '').toString().toUpperCase().trim();
+        const currentExpense = await prisma.expense.findUnique({
+            where: { id },
+            include: {
+                employee: true,
+            },
+        });
+        if (!currentExpense) {
+            return res.status(404).json({ success: false, message: 'Expense claim not found' });
+        }
         const act = (action || '').toString().toUpperCase().trim();
-        let newStatus = 'APPROVED';
+        let newStatus = 'PENDING_CASHIER';
         if (act === 'REJECT') {
             newStatus = 'REJECTED';
         }
         else if (act === 'PAY' || act === 'PAID' || act === 'SETTLE' || act === 'DISBURSE') {
             newStatus = 'PAID';
         }
-        else if (act === 'APPROVED_1' || act === 'LEVEL_1') {
-            newStatus = 'APPROVED_1';
+        else if (act === 'APPROVED_1' || act === 'LEVEL_1' || act === 'MANAGER_APPROVE') {
+            newStatus = 'PENDING_OWNER';
         }
-        else if (act === 'APPROVED_2' || act === 'OWNER_APPROVED') {
-            newStatus = 'APPROVED_2';
+        else if (act === 'APPROVED_2' || act === 'OWNER_APPROVED' || act === 'PENDING_CASHIER' || act === 'APPROVE_FOR_CASHIER') {
+            newStatus = 'PENDING_CASHIER';
+        }
+        else if (act === 'APPROVE') {
+            if (userRole === 'MANAGER') {
+                newStatus = 'PENDING_OWNER';
+            }
+            else if (userRole === 'OWNER') {
+                newStatus = 'PENDING_CASHIER';
+            }
+            else if (currentExpense.status === 'PENDING_MANAGER') {
+                newStatus = 'PENDING_OWNER';
+            }
+            else {
+                newStatus = 'PENDING_CASHIER';
+            }
         }
         const updated = await prisma.expense.update({
             where: { id },
@@ -191,7 +216,68 @@ const processApproval = async (req, res) => {
                 status: newStatus,
                 ...(amount ? { amount: parseFloat(amount) } : {}),
             },
+            include: {
+                employee: true,
+                category: true,
+                location: true,
+            },
         });
+        // Record approval log
+        try {
+            if (authUser?.userId || authUser?.id) {
+                await prisma.expenseApproval.create({
+                    data: {
+                        expenseId: id,
+                        approverId: authUser.userId || authUser.id,
+                        status: newStatus === 'REJECTED' ? 'REJECTED' : 'APPROVED',
+                        action: act,
+                        remarks: remarks || comments || reason || null,
+                        amount: amount ? parseFloat(amount) : updated.amount,
+                        approvedAt: newStatus !== 'REJECTED' ? new Date() : null,
+                        rejectedAt: newStatus === 'REJECTED' ? new Date() : null,
+                    },
+                });
+            }
+        }
+        catch (_) { }
+        // Persist real-time notification to the creator in DB
+        try {
+            if (currentExpense.employeeId) {
+                let notifTitle = 'Claim Update';
+                let notifMessage = `Your claim of ₹${updated.amount} for "${updated.description}" was updated.`;
+                let notifType = 'STATUS_UPDATE';
+                if (newStatus === 'PAID') {
+                    notifTitle = 'Claim Disbursed & Settled 🎉';
+                    notifMessage = `Your claim of ₹${updated.amount} for "${updated.description}" has been disbursed by Cashier.`;
+                    notifType = 'PAID';
+                }
+                else if (newStatus === 'PENDING_OWNER') {
+                    notifTitle = 'Approved by Manager';
+                    notifMessage = `Your claim of ₹${updated.amount} for "${updated.description}" was approved by Manager and forwarded to Owner.`;
+                    notifType = 'APPROVED';
+                }
+                else if (newStatus === 'PENDING_CASHIER') {
+                    notifTitle = 'Approved by Owner';
+                    notifMessage = `Your claim of ₹${updated.amount} for "${updated.description}" was approved by Owner and sent for cash disbursal.`;
+                    notifType = 'APPROVED';
+                }
+                else if (newStatus === 'REJECTED') {
+                    const r = remarks || comments || reason || 'Policy criteria not met';
+                    notifTitle = 'Claim Rejected';
+                    notifMessage = `Your claim of ₹${updated.amount} for "${updated.description}" was rejected: ${r}`;
+                    notifType = 'REJECTED';
+                }
+                await prisma.notification.create({
+                    data: {
+                        userId: currentExpense.employeeId,
+                        title: notifTitle,
+                        message: notifMessage,
+                        type: notifType,
+                    },
+                });
+            }
+        }
+        catch (_) { }
         return res.status(200).json({ success: true, data: updated });
     }
     catch (error) {
