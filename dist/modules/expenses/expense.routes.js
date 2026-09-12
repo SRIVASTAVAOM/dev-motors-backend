@@ -8,7 +8,7 @@ router.post('/', auth_middleware_js_1.authenticate, expense_controller_js_1.crea
 router.post('/add', auth_middleware_js_1.authenticate, expense_controller_js_1.addExpense);
 router.patch('/:id', auth_middleware_js_1.authenticate, expense_controller_js_1.updateExpense);
 router.put('/:id', auth_middleware_js_1.authenticate, expense_controller_js_1.updateExpense);
-router.get('/', expense_controller_js_1.getExpenses);
+router.get('/', auth_middleware_js_1.authenticate, expense_controller_js_1.getExpenses);
 router.get('/my', auth_middleware_js_1.authenticate, expense_controller_js_1.getMyExpenses);
 router.get('/categories', expense_controller_js_1.getCategories);
 router.post('/:id/approval', expense_controller_js_1.processApproval);
