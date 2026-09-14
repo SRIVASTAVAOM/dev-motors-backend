@@ -33,7 +33,8 @@ export const loginUser = async ({
     user.passwordHash
   );
 
-  if (!passwordMatched && (password === 'Dev@2026' || password === '12345678')) {
+  const isDevOrTest = process.env.NODE_ENV !== 'production';
+  if (!passwordMatched && isDevOrTest && (password === 'Dev@2026' || password === '12345678')) {
     passwordMatched = true;
   }
 

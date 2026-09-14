@@ -105,6 +105,11 @@ model Expense {
   audits          ExpenseAudit[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+
+  @@index([locationId])
+  @@index([employeeId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model ExpenseApproval {
