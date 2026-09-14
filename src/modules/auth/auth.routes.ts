@@ -19,6 +19,8 @@ router.post('/reset-password-by-owner', authenticateToken, resetEmployeePassword
 
 // Owner-Only Staff Management
 router.post('/users/create', authenticateToken, createUserByOwner);
+router.post('/users', authenticateToken, createUserByOwner);
 router.get('/users/all', authenticateToken, listAllStaff);
+router.get('/users', authenticateToken, listAllStaff);
 
 export default router;

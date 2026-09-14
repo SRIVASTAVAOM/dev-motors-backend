@@ -13,7 +13,7 @@ app.get(['/health', '/api/health'], (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Dev Motors API Live' });
 });
 
-app.use('/api/auth', authRoutes);
+app.use(['/api/auth', '/api'], authRoutes);
 app.use('/api/expenses', expenseRoutes);
 
 export default app;

@@ -31,6 +31,21 @@ export const createUserByOwner = async (req: Request, res: Response) => {
     }
 
     let targetLocationId = locationId;
+    if (!targetLocationId && (req.body.branch || req.body.locationName)) {
+      const branchQuery = (req.body.branch || req.body.locationName).trim();
+      const found = await prisma.location.findFirst({
+        where: {
+          OR: [
+            { name: { contains: branchQuery, mode: 'insensitive' } },
+            { city: { contains: branchQuery, mode: 'insensitive' } },
+            { locationCode: { equals: branchQuery, mode: 'insensitive' } },
+          ],
+        },
+      });
+      if (found) {
+        targetLocationId = found.id;
+      }
+    }
     if (!targetLocationId) {
       const defaultLoc = await prisma.location.findFirst();
       targetLocationId = defaultLoc?.id;
