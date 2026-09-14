@@ -20,8 +20,12 @@ const addExpense = async (req, res) => {
             catch (_) { }
         }
         const { amount, description, categoryId, receiptFileName, receiptUrl, expenseDate, location, locationId, employeeId } = req.body;
-        if (!amount || !description) {
-            return res.status(400).json({ success: false, message: 'Amount and description are required' });
+        const numAmount = parseFloat(amount);
+        if (!amount || !description || isNaN(numAmount) || numAmount <= 0) {
+            return res.status(400).json({ success: false, message: 'Valid positive amount and description are required' });
+        }
+        if (numAmount > 1000000) {
+            return res.status(400).json({ success: false, message: 'Amount cannot exceed ₹10,00,000 per claim' });
         }
         // 1. Fetch exact user from DB
         let dbUser = null;
@@ -43,6 +47,22 @@ const addExpense = async (req, res) => {
         }
         if (!dbUser) {
             return res.status(400).json({ success: false, message: 'Valid employee account not found in database' });
+        }
+        // Duplicate check: Same employee, same exact amount and description within last 3 minutes
+        const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+        const existingRecentClaim = await prisma.expense.findFirst({
+            where: {
+                employeeId: dbUser.id,
+                amount: numAmount,
+                description: description.trim(),
+                createdAt: { gte: threeMinutesAgo },
+            },
+        });
+        if (existingRecentClaim) {
+            return res.status(409).json({
+                success: false,
+                message: 'A claim with this exact amount and purpose was recently submitted. Please avoid duplicate entries.',
+            });
         }
         // 2. Resolve Category
         let dbCategory = null;
@@ -178,7 +198,11 @@ const getMyExpenses = async (req, res) => {
         else if (role === 'MANAGER' && authUser?.locationId) {
             whereClause.locationId = authUser.locationId;
         }
-        const expenses = await prisma.expense.findMany({
+        const pageStr = req.query.page;
+        const limitStr = req.query.limit;
+        const page = pageStr ? parseInt(pageStr, 10) : undefined;
+        const limit = limitStr ? parseInt(limitStr, 10) : undefined;
+        const findOptions = {
             where: whereClause,
             include: {
                 category: true,
@@ -188,7 +212,12 @@ const getMyExpenses = async (req, res) => {
                 },
             },
             orderBy: { createdAt: 'desc' },
-        });
+        };
+        if (page && limit && page > 0 && limit > 0) {
+            findOptions.skip = (page - 1) * limit;
+            findOptions.take = limit;
+        }
+        const expenses = await prisma.expense.findMany(findOptions);
         return res.status(200).json({ success: true, data: expenses });
     }
     catch (error) {

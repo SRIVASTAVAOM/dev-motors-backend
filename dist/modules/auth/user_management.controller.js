@@ -59,6 +59,21 @@ const createUserByOwner = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Employee ID or Email already exists.' });
         }
         let targetLocationId = locationId;
+        if (!targetLocationId && (req.body.branch || req.body.locationName)) {
+            const branchQuery = (req.body.branch || req.body.locationName).trim();
+            const found = await prisma.location.findFirst({
+                where: {
+                    OR: [
+                        { name: { contains: branchQuery, mode: 'insensitive' } },
+                        { city: { contains: branchQuery, mode: 'insensitive' } },
+                        { locationCode: { equals: branchQuery, mode: 'insensitive' } },
+                    ],
+                },
+            });
+            if (found) {
+                targetLocationId = found.id;
+            }
+        }
         if (!targetLocationId) {
             const defaultLoc = await prisma.location.findFirst();
             targetLocationId = defaultLoc?.id;

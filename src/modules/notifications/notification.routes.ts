@@ -3,6 +3,8 @@ import { Router } from "express";
 import {
   getNotifications,
   markAsRead,
+  markAllAsRead,
+  clearNotifications,
 } from "./notification.controller.js";
 
 import {
@@ -15,6 +17,18 @@ router.get(
   "/",
   authenticate,
   getNotifications
+);
+
+router.patch(
+  "/read-all",
+  authenticate,
+  markAllAsRead
+);
+
+router.delete(
+  "/",
+  authenticate,
+  clearNotifications
 );
 
 router.patch(

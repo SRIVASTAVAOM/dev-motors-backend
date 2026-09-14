@@ -7,13 +7,15 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const auth_routes_js_1 = __importDefault(require("./modules/auth/auth.routes.js"));
 const expense_routes_js_1 = __importDefault(require("./modules/expenses/expense.routes.js"));
+const notification_routes_js_1 = __importDefault(require("./modules/notifications/notification.routes.js"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: '*' }));
 app.use(express_1.default.json({ limit: '50mb' }));
 app.use(express_1.default.urlencoded({ limit: '50mb', extended: true }));
-app.get('/health', (req, res) => {
+app.get(['/health', '/api/health'], (req, res) => {
     res.status(200).json({ status: 'OK', message: 'Dev Motors API Live' });
 });
-app.use('/api/auth', auth_routes_js_1.default);
+app.use(['/api/auth', '/api'], auth_routes_js_1.default);
 app.use('/api/expenses', expense_routes_js_1.default);
+app.use('/api/notifications', notification_routes_js_1.default);
 exports.default = app;

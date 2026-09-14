@@ -7,7 +7,10 @@ import {
 import {
   getMyNotifications,
   markNotificationAsRead,
+  markAllNotificationsAsRead,
+  clearAllNotifications,
 } from "./notification.service.js";
+
 
 export const getNotifications = async (
   req: AuthenticatedRequest,
@@ -97,6 +100,60 @@ export const markAsRead = async (
     return res.status(404).json({
       success: false,
       message,
+    });
+  }
+};
+
+export const markAllAsRead = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    await markAllNotificationsAsRead(req.user.userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "All notifications marked as read",
+    });
+  } catch (error) {
+    console.error("Mark all notifications read error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update notifications",
+    });
+  }
+};
+
+export const clearNotifications = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    await clearAllNotifications(req.user.userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "All notifications cleared",
+    });
+  } catch (error) {
+    console.error("Clear notifications error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to clear notifications",
     });
   }
 };

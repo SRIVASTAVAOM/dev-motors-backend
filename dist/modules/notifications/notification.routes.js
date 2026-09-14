@@ -5,5 +5,7 @@ const notification_controller_js_1 = require("./notification.controller.js");
 const auth_middleware_js_1 = require("../../middleware/auth.middleware.js");
 const router = (0, express_1.Router)();
 router.get("/", auth_middleware_js_1.authenticate, notification_controller_js_1.getNotifications);
+router.patch("/read-all", auth_middleware_js_1.authenticate, notification_controller_js_1.markAllAsRead);
+router.delete("/", auth_middleware_js_1.authenticate, notification_controller_js_1.clearNotifications);
 router.patch("/:notificationId/read", auth_middleware_js_1.authenticate, notification_controller_js_1.markAsRead);
 exports.default = router;

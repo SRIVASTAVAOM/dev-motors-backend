@@ -23,7 +23,8 @@ const loginUser = async ({ employeeId, password, }) => {
         throw new Error("Your account is inactive");
     }
     let passwordMatched = await bcryptjs_1.default.compare(password, user.passwordHash);
-    if (!passwordMatched && (password === 'Dev@2026' || password === '12345678')) {
+    const isDevOrTest = process.env.NODE_ENV !== 'production';
+    if (!passwordMatched && isDevOrTest && (password === 'Dev@2026' || password === '12345678')) {
         passwordMatched = true;
     }
     if (!passwordMatched) {

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.markAsRead = exports.getNotifications = void 0;
+exports.clearNotifications = exports.markAllAsRead = exports.markAsRead = exports.getNotifications = void 0;
 const notification_service_js_1 = require("./notification.service.js");
 const getNotifications = async (req, res) => {
     try {
@@ -64,3 +64,49 @@ const markAsRead = async (req, res) => {
     }
 };
 exports.markAsRead = markAsRead;
+const markAllAsRead = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required",
+            });
+        }
+        await (0, notification_service_js_1.markAllNotificationsAsRead)(req.user.userId);
+        return res.status(200).json({
+            success: true,
+            message: "All notifications marked as read",
+        });
+    }
+    catch (error) {
+        console.error("Mark all notifications read error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to update notifications",
+        });
+    }
+};
+exports.markAllAsRead = markAllAsRead;
+const clearNotifications = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required",
+            });
+        }
+        await (0, notification_service_js_1.clearAllNotifications)(req.user.userId);
+        return res.status(200).json({
+            success: true,
+            message: "All notifications cleared",
+        });
+    }
+    catch (error) {
+        console.error("Clear notifications error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to clear notifications",
+        });
+    }
+};
+exports.clearNotifications = clearNotifications;

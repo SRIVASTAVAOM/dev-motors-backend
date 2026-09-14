@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './modules/auth/auth.routes.js';
 import expenseRoutes from './modules/expenses/expense.routes.js';
+import notificationRoutes from './modules/notifications/notification.routes.js';
 
 const app = express();
 
@@ -15,5 +16,7 @@ app.get(['/health', '/api/health'], (req, res) => {
 
 app.use(['/api/auth', '/api'], authRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 export default app;
+
