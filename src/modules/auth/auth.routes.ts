@@ -8,6 +8,7 @@ const router = Router();
 
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', forgotPassword);
 
 // Profile Management
 router.post('/update-profile', authenticateToken, updateProfile);

@@ -8,6 +8,7 @@ const auth_middleware_1 = require("../../middleware/auth.middleware");
 const router = (0, express_1.Router)();
 router.post('/login', auth_controller_1.login);
 router.post('/forgot-password', auth_controller_1.forgotPassword);
+router.post('/reset-password', auth_controller_1.forgotPassword);
 // Profile Management
 router.post('/update-profile', auth_middleware_1.authenticateToken, auth_controller_1.updateProfile);
 router.put('/update-profile', auth_middleware_1.authenticateToken, auth_controller_1.updateProfile);
