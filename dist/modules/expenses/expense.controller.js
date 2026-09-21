@@ -100,9 +100,17 @@ const addExpense = async (req, res) => {
             targetLocationId = firstLoc?.id ?? null;
         }
         // Determine initial status based on creator role:
-        // Manager or Cashier claims bypass manager and go directly to OWNER!
+        // Manager, Cashier, or users with direct owner approval (e.g. Noushad Ahmad) bypass manager and go directly to OWNER!
         let initialStatus = 'PENDING_MANAGER';
-        if (dbUser.role === 'MANAGER' || dbUser.role === 'CASHIER' || dbUser.role === 'OWNER') {
+        const empIdUpper = (dbUser.employeeId || '').toUpperCase();
+        const userNameUpper = (dbUser.name || '').toUpperCase();
+        if (dbUser.role === 'MANAGER' ||
+            dbUser.role === 'CASHIER' ||
+            dbUser.role === 'OWNER' ||
+            empIdUpper.includes('NAUSAD') ||
+            empIdUpper.includes('NOUSHAD') ||
+            userNameUpper.includes('NOUSHAD') ||
+            userNameUpper.includes('NAUSAD')) {
             initialStatus = 'PENDING_OWNER';
         }
         const effectiveReceiptUrl = receiptUrl || req.body.receiptImage || 'https://devmotors-assets.s3.amazonaws.com/receipts/bill.png';
