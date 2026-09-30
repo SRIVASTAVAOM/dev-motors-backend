@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getExpenseTimeline = exports.editExpenseAmount = exports.createExpense = exports.getExpenses = exports.getExpenseCategories = void 0;
 const prisma_js_1 = require("../../lib/prisma.js");
+const department_js_1 = require("../../lib/department.js");
 const getExpenseCategories = async () => {
     return prisma_js_1.prisma.expenseCategory.findMany({
         where: {
@@ -44,7 +45,7 @@ const getExpenses = async (userId) => {
             : {
                 employeeId: user.id,
             };
-    return prisma_js_1.prisma.expense.findMany({
+    const expenses = await prisma_js_1.prisma.expense.findMany({
         where,
         include: {
             category: {
@@ -76,6 +77,10 @@ const getExpenses = async (userId) => {
             expenseDate: "desc",
         },
     });
+    return expenses.map((e) => ({
+        ...e,
+        department: (0, department_js_1.getDepartment)(e),
+    }));
 };
 exports.getExpenses = getExpenses;
 const createExpense = async (data) => {

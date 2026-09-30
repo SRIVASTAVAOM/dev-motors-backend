@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processApproval = exports.getPendingApprovals = void 0;
 const prisma_js_1 = require("../../lib/prisma.js");
+const department_js_1 = require("../../lib/department.js");
 /**
  * Workflow:
  *
@@ -31,47 +32,7 @@ const getPendingApprovals = async (userId) => {
     if (user.status !== "ACTIVE") {
         throw new Error("User account is inactive");
     }
-    if (user.role === "OWNER") {
-        return prisma_js_1.prisma.expenseApproval.findMany({
-            where: {
-                approverId: user.id,
-                status: "PENDING",
-            },
-            include: {
-                expense: {
-                    include: {
-                        employee: {
-                            select: {
-                                id: true,
-                                employeeId: true,
-                                name: true,
-                                email: true,
-                                locationId: true,
-                                managerId: true,
-                            },
-                        },
-                        location: true,
-                        category: true,
-                    },
-                },
-                approver: {
-                    select: {
-                        id: true,
-                        employeeId: true,
-                        name: true,
-                        role: true,
-                    },
-                },
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
-        });
-    }
-    if (user.role !== "MANAGER" && user.role !== "CASHIER") {
-        throw new Error("Only managers, owners and cashiers can view approvals");
-    }
-    return prisma_js_1.prisma.expenseApproval.findMany({
+    const approvals = await prisma_js_1.prisma.expenseApproval.findMany({
         where: {
             approverId: user.id,
             status: "PENDING",
@@ -105,6 +66,12 @@ const getPendingApprovals = async (userId) => {
         orderBy: {
             createdAt: "desc",
         },
+    });
+    return approvals.map((app) => {
+        if (app.expense) {
+            app.expense.department = (0, department_js_1.getDepartment)(app.expense);
+        }
+        return app;
     });
 };
 exports.getPendingApprovals = getPendingApprovals;
@@ -299,15 +266,30 @@ const processApproval = async (approvalId, actorId, action, remarks) => {
         // MANAGER → OWNER
         // --------------------------------------------------------
         if (actor.role === "MANAGER") {
-            const owner = await tx.user.findFirst({
-                where: {
-                    role: "OWNER",
-                    status: "ACTIVE",
-                },
+            const dept = (0, department_js_1.getDepartment)(currentApproval.expense);
+            const ownerQuery = (0, department_js_1.getOwnerQueryForDepartment)(dept);
+            let owner = await tx.user.findFirst({
+                where: ownerQuery,
                 select: {
                     id: true,
+                    name: true,
+                    employeeId: true,
                 },
             });
+            // Fallback if specific department owner is not found
+            if (!owner) {
+                owner = await tx.user.findFirst({
+                    where: {
+                        role: "OWNER",
+                        status: "ACTIVE",
+                    },
+                    select: {
+                        id: true,
+                        name: true,
+                        employeeId: true,
+                    },
+                });
+            }
             if (!owner) {
                 throw new Error("No active owner found");
             }
@@ -331,8 +313,8 @@ const processApproval = async (approvalId, actorId, action, remarks) => {
             await tx.notification.create({
                 data: {
                     userId: owner.id,
-                    title: "Expense Pending Owner Approval",
-                    message: `Expense of ₹${currentApproval.expense.amount} from ` +
+                    title: `[${dept}] Expense Pending Owner Approval`,
+                    message: `[${dept} Department] Expense of ₹${currentApproval.expense.amount} from ` +
                         `${currentApproval.expense.employee.name} ` +
                         `has been approved by ${actor.name} and requires your approval.`,
                     type: "EXPENSE_SUBMITTED",

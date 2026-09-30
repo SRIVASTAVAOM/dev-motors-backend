@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { getDepartment } from "../../lib/department.js";
 
 interface CreateExpenseInput {
   employeeId: string;
@@ -61,7 +62,7 @@ export const getExpenses = async (userId: string) => {
             employeeId: user.id,
           };
 
-  return prisma.expense.findMany({
+  const expenses = await prisma.expense.findMany({
     where,
     include: {
       category: {
@@ -93,6 +94,11 @@ export const getExpenses = async (userId: string) => {
       expenseDate: "desc",
     },
   });
+
+  return expenses.map((e) => ({
+    ...e,
+    department: getDepartment(e),
+  }));
 };
 
 export const createExpense = async (data: CreateExpenseInput) => {

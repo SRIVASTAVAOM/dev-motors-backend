@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import { getDepartment } from '../../lib/department.js';
 
 const prisma = new PrismaClient();
 
@@ -151,7 +152,10 @@ export const addExpense = async (req: Request, res: Response) => {
     return res.status(201).json({
       success: true,
       message: 'Expense claim created successfully',
-      data: newExpense,
+      data: {
+        ...newExpense,
+        department: getDepartment(newExpense),
+      },
     });
   } catch (error: any) {
     console.error('Create Expense Error:', error);
@@ -197,7 +201,14 @@ export const updateExpense = async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(200).json({ success: true, message: 'Expense updated successfully', data: updated });
+    return res.status(200).json({
+      success: true,
+      message: 'Expense updated successfully',
+      data: {
+        ...updated,
+        department: getDepartment(updated),
+      },
+    });
   } catch (error: any) {
     console.error('Update Expense Error:', error);
     return res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
@@ -246,8 +257,12 @@ export const getMyExpenses = async (req: Request, res: Response) => {
     }
 
     const expenses = await prisma.expense.findMany(findOptions);
+    const mappedExpenses = expenses.map((e) => ({
+      ...e,
+      department: getDepartment(e),
+    }));
 
-    return res.status(200).json({ success: true, data: expenses });
+    return res.status(200).json({ success: true, data: mappedExpenses });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -375,7 +390,13 @@ export const processApproval = async (req: Request, res: Response) => {
       }
     } catch (_) {}
 
-    return res.status(200).json({ success: true, data: updated });
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...updated,
+        department: getDepartment(updated),
+      },
+    });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }

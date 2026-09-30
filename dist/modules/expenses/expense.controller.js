@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteExpense = exports.getExpenseTimeline = exports.getTimeline = exports.approveExpense = exports.processApproval = exports.getCategories = exports.getExpenses = exports.getMyExpenses = exports.updateExpense = exports.createExpense = exports.addExpense = void 0;
 const client_1 = require("@prisma/client");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const department_js_1 = require("../../lib/department.js");
 const prisma = new client_1.PrismaClient();
 const addExpense = async (req, res) => {
     try {
@@ -138,7 +139,10 @@ const addExpense = async (req, res) => {
         return res.status(201).json({
             success: true,
             message: 'Expense claim created successfully',
-            data: newExpense,
+            data: {
+                ...newExpense,
+                department: (0, department_js_1.getDepartment)(newExpense),
+            },
         });
     }
     catch (error) {
@@ -181,7 +185,14 @@ const updateExpense = async (req, res) => {
                 },
             },
         });
-        return res.status(200).json({ success: true, message: 'Expense updated successfully', data: updated });
+        return res.status(200).json({
+            success: true,
+            message: 'Expense updated successfully',
+            data: {
+                ...updated,
+                department: (0, department_js_1.getDepartment)(updated),
+            },
+        });
     }
     catch (error) {
         console.error('Update Expense Error:', error);
@@ -226,7 +237,11 @@ const getMyExpenses = async (req, res) => {
             findOptions.take = limit;
         }
         const expenses = await prisma.expense.findMany(findOptions);
-        return res.status(200).json({ success: true, data: expenses });
+        const mappedExpenses = expenses.map((e) => ({
+            ...e,
+            department: (0, department_js_1.getDepartment)(e),
+        }));
+        return res.status(200).json({ success: true, data: mappedExpenses });
     }
     catch (error) {
         return res.status(500).json({ success: false, message: error.message });
@@ -357,7 +372,13 @@ const processApproval = async (req, res) => {
             }
         }
         catch (_) { }
-        return res.status(200).json({ success: true, data: updated });
+        return res.status(200).json({
+            success: true,
+            data: {
+                ...updated,
+                department: (0, department_js_1.getDepartment)(updated),
+            },
+        });
     }
     catch (error) {
         return res.status(500).json({ success: false, message: error.message });

@@ -1,4 +1,10 @@
 import { prisma } from "../../lib/prisma.js";
+import {
+  getDepartment,
+  getOwnerQueryForDepartment,
+  isSalesOwner,
+  isServiceOwner,
+} from "../../lib/department.js";
 
 type ApprovalAction = "APPROVE" | "REJECT";
 
@@ -35,51 +41,7 @@ export const getPendingApprovals = async (userId: string) => {
     throw new Error("User account is inactive");
   }
 
-  if (user.role === "OWNER") {
-    return prisma.expenseApproval.findMany({
-      where: {
-        approverId: user.id,
-        status: "PENDING",
-      },
-      include: {
-        expense: {
-          include: {
-            employee: {
-              select: {
-                id: true,
-                employeeId: true,
-                name: true,
-                email: true,
-                locationId: true,
-                managerId: true,
-              },
-            },
-            location: true,
-            category: true,
-          },
-        },
-        approver: {
-          select: {
-            id: true,
-            employeeId: true,
-            name: true,
-            role: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-  }
-
-  if (user.role !== "MANAGER" && user.role !== "CASHIER") {
-    throw new Error(
-      "Only managers, owners and cashiers can view approvals"
-    );
-  }
-
-  return prisma.expenseApproval.findMany({
+  const approvals = await prisma.expenseApproval.findMany({
     where: {
       approverId: user.id,
       status: "PENDING",
@@ -113,6 +75,13 @@ export const getPendingApprovals = async (userId: string) => {
     orderBy: {
       createdAt: "desc",
     },
+  });
+
+  return approvals.map((app) => {
+    if (app.expense) {
+      (app.expense as any).department = getDepartment(app.expense);
+    }
+    return app;
   });
 };
 
@@ -356,15 +325,32 @@ export const processApproval = async (
     // --------------------------------------------------------
 
     if (actor.role === "MANAGER") {
-      const owner = await tx.user.findFirst({
-        where: {
-          role: "OWNER",
-          status: "ACTIVE",
-        },
+      const dept = getDepartment(currentApproval.expense);
+      const ownerQuery = getOwnerQueryForDepartment(dept);
+
+      let owner = await tx.user.findFirst({
+        where: ownerQuery,
         select: {
           id: true,
+          name: true,
+          employeeId: true,
         },
       });
+
+      // Fallback if specific department owner is not found
+      if (!owner) {
+        owner = await tx.user.findFirst({
+          where: {
+            role: "OWNER",
+            status: "ACTIVE",
+          },
+          select: {
+            id: true,
+            name: true,
+            employeeId: true,
+          },
+        });
+      }
 
       if (!owner) {
         throw new Error(
@@ -395,9 +381,9 @@ export const processApproval = async (
       await tx.notification.create({
         data: {
           userId: owner.id,
-          title: "Expense Pending Owner Approval",
+          title: `[${dept}] Expense Pending Owner Approval`,
           message:
-            `Expense of ₹${currentApproval.expense.amount} from ` +
+            `[${dept} Department] Expense of ₹${currentApproval.expense.amount} from ` +
             `${currentApproval.expense.employee.name} ` +
             `has been approved by ${actor.name} and requires your approval.`,
           type: "EXPENSE_SUBMITTED",
