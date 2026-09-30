@@ -69,11 +69,11 @@ async function main() {
     // --- IGLAS ---
     { id: 'iglas_nitesh_sm', name: 'Nitesh Pal', email: 'iglas_nitesh_sm@devmotors.in', role: 'MANAGER', loc: 'Iglas' },
     { id: 'iglas_rahul_wm', name: 'Rahul', email: 'iglas_rahul_wm@devmotors.in', role: 'MANAGER', loc: 'Iglas' },
-    { id: 'iglas_grish_acc', name: 'Grish Sharma', email: 'iglas_grish_acc@devmotors.in', role: 'CASHIER', loc: 'Iglas' },
-    { id: 'iglas_gaurav_cashier', name: 'Gaurav Sharma', email: 'iglas_gaurav_cashier@devmotors.in', role: 'CASHIER', loc: 'Main Outlet', mgr: null },
-    { id: 'iglas_birendra_emp', name: 'Birendra Tiwari', email: 'iglas_birendra_emp@devmotors.in', role: 'EMPLOYEE', loc: 'Main Outlet', mgr: null },
-    { id: 'iglas_shibli_rec', name: 'Shibli', email: 'iglas_shibli_rec@devmotors.in', role: 'EMPLOYEE', loc: 'Main Outlet', mgr: 'main_ahmar_gm' },
-    { id: 'iglas_bablu_can', name: 'Bablu Canteen', email: 'iglas_bablu_can@devmotors.in', role: 'EMPLOYEE', loc: 'Main Outlet', mgr: null },
+    { id: 'main_grish_acc', name: 'Girish Sharma', email: 'main_grish_acc@devmotors.in', role: 'CASHIER', loc: 'Main Outlet', mgr: null },
+    { id: 'main_gaurav_cashier', name: 'Gaurav Sharma', email: 'main_gaurav_cashier@devmotors.in', role: 'CASHIER', loc: 'Main Outlet', mgr: null },
+    { id: 'main_birendra_emp', name: 'Birendra Tiwari', email: 'main_birendra_emp@devmotors.in', role: 'EMPLOYEE', loc: 'Main Outlet', mgr: null },
+    { id: 'main_shibli_rec', name: 'Shibli', email: 'main_shibli_rec@devmotors.in', role: 'EMPLOYEE', loc: 'Main Outlet', mgr: 'main_ahmar_gm' },
+    { id: 'main_bablu_can', name: 'Bablu Canteen', email: 'main_bablu_can@devmotors.in', role: 'EMPLOYEE', loc: 'Main Outlet', mgr: null },
   ];
 
   let seededCount = 0;

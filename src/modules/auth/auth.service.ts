@@ -11,9 +11,20 @@ export const loginUser = async ({
   employeeId,
   password,
 }: LoginInput) => {
-  const user = await prisma.user.findUnique({
+  const cleanId = employeeId.trim();
+  const aliasId = cleanId.startsWith('main_')
+    ? cleanId.replace('main_', 'iglas_')
+    : cleanId.startsWith('iglas_')
+    ? cleanId.replace('iglas_', 'main_')
+    : cleanId;
+
+  const user = await prisma.user.findFirst({
     where: {
-      employeeId,
+      OR: [
+        { employeeId: { equals: cleanId, mode: 'insensitive' } },
+        { employeeId: { equals: aliasId, mode: 'insensitive' } },
+        { email: { equals: cleanId, mode: 'insensitive' } },
+      ],
     },
     include: {
       location: true,

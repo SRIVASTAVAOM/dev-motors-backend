@@ -108,8 +108,8 @@ async function main() {{
     {{ id: 'nexa_shivam_acc', name: 'Shivam', loc: 'Aligarh Nexa' }},
     {{ id: 'khair_rohit_acc', name: 'Rohit', loc: 'Khair' }},
     {{ id: 'atrauli_sumit_acc', name: 'Sumit', loc: 'Atrauli' }},
-    {{ id: 'iglas_grish_acc', name: 'Grish Sharma', loc: 'Iglas' }},
-    {{ id: 'iglas_gaurav_cashier', name: 'Gaurav Sharma', loc: 'Main Outlet', mgr: null }},
+    {{ id: 'main_grish_acc', name: 'Girish Sharma', loc: 'Main Outlet', mgr: null }},
+    {{ id: 'main_gaurav_cashier', name: 'Gaurav Sharma', loc: 'Main Outlet', mgr: null }},
   ];
 
   for (const c of cashiers) {{
@@ -142,9 +142,9 @@ async function main() {{
     {{ id: 'main_sunil_spare', name: 'Sunil Sharma', loc: 'Main Outlet', mgr: 'main_dinesh_gm' }},
     {{ id: 'khair_rajendra_bm', name: 'Rajendra Dubey', loc: 'Khair', mgr: null }},
     {{ id: 'atrauli_yogesh_bsm', name: 'Yogesh Kumar', loc: 'Atrauli', mgr: null }},
-    {{ id: 'iglas_birendra_emp', name: 'Birendra Tiwari', loc: 'Main Outlet', mgr: null }},
-    {{ id: 'iglas_shibli_rec', name: 'Shibli', loc: 'Main Outlet', mgr: 'main_ahmar_gm' }},
-    {{ id: 'iglas_bablu_can', name: 'Bablu Canteen', loc: 'Main Outlet', mgr: null }},
+    {{ id: 'main_birendra_emp', name: 'Birendra Tiwari', loc: 'Main Outlet', mgr: null }},
+    {{ id: 'main_shibli_rec', name: 'Shibli', loc: 'Main Outlet', mgr: 'main_ahmar_gm' }},
+    {{ id: 'main_bablu_can', name: 'Bablu Canteen', loc: 'Main Outlet', mgr: null }},
   ];
 
   for (const e of employees) {{

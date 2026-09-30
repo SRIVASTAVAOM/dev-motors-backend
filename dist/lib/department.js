@@ -31,6 +31,7 @@ exports.SALES_EMPLOYEE_IDS = [
     'khair_pankaj_sm',
     'atrauli_raj_sm',
     'iglas_nitesh_sm',
+    'main_shibli_rec',
     'iglas_shibli_rec',
 ];
 exports.SALES_OWNER_IDS = [

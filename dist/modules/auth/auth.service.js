@@ -8,9 +8,19 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const prisma_js_1 = require("../../lib/prisma.js");
 const loginUser = async ({ employeeId, password, }) => {
-    const user = await prisma_js_1.prisma.user.findUnique({
+    const cleanId = employeeId.trim();
+    const aliasId = cleanId.startsWith('main_')
+        ? cleanId.replace('main_', 'iglas_')
+        : cleanId.startsWith('iglas_')
+            ? cleanId.replace('iglas_', 'main_')
+            : cleanId;
+    const user = await prisma_js_1.prisma.user.findFirst({
         where: {
-            employeeId,
+            OR: [
+                { employeeId: { equals: cleanId, mode: 'insensitive' } },
+                { employeeId: { equals: aliasId, mode: 'insensitive' } },
+                { email: { equals: cleanId, mode: 'insensitive' } },
+            ],
         },
         include: {
             location: true,

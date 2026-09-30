@@ -30,7 +30,7 @@ When modifying, adding, or refactoring features, you **MUST** respect the follow
 3. **DO NOT MODIFY REPORTING MANAGERS:**  
    Across the entire dealership, **ONLY TWO EMPLOYEES** report to Branch Managers:
    - **Sunil Sharma (`main_sunil_spare`)** $\rightarrow$ reports to **Dinesh Sharma (`main_dinesh_gm`)** [Service GM]
-   - **Shibli (`iglas_shibli_rec`)** $\rightarrow$ reports to **Ahmar Ammar (`main_ahmar_gm`)** [Sales GM]  
+   - **Shibli (`main_shibli_rec`)** $\rightarrow$ reports to **Ahmar Ammar (`main_ahmar_gm`)** [Sales GM]  
    **All other employees report directly to the Dealership Owners** (`managerId = null`). Never revert them to branch managers!
 4. **DO NOT DISBURSE UNAPPROVED EXPENSES:**  
    Cashiers **CANNOT** pay out any claim unless it has attained **`PENDING_CASHIER`** (fully approved by Owner).
@@ -57,14 +57,14 @@ When modifying, adding, or refactoring features, you **MUST** respect the follow
 |---|---|---|---|---|---|
 | **Ahmar Ammar** | `main_ahmar_gm` | MANAGER (Sales GM) | Main Outlet | `Dev@2026` | None (Direct Owner) |
 | **Dinesh Sharma** | `main_dinesh_gm` | MANAGER (Service GM) | Main Outlet | `Dev@2026` | None (Direct Owner) |
-| **Girish Sharma** | `iglas_grish_acc` | CASHIER / Accountant | Main Outlet | `Dev@2026` | None (Direct Owner) |
-| **Gaurav Sharma** | `iglas_gaurav_cashier` | CASHIER | Main Outlet | `Dev@2026` | None (Direct Owner) |
+| **Girish Sharma** | `main_grish_acc` | CASHIER / Accountant | Main Outlet | `Dev@2026` | None (Direct Owner) |
+| **Gaurav Sharma** | `main_gaurav_cashier` | CASHIER | Main Outlet | `Dev@2026` | None (Direct Owner) |
 | **Gyanendra Singhle** | `main_gyanendra_bsm` | EMPLOYEE (BSM) | Main Outlet | `Dev@2026` | **Direct Owner** |
 | **Radha Pal** | `main_radha_ccm` | EMPLOYEE (CCM) | Main Outlet | `Dev@2026` | **Direct Owner** |
 | **Sunil Sharma** | `main_sunil_spare` | EMPLOYEE (Spare Parts) | Main Outlet | `Dev@2026` | **Dinesh Sharma (`main_dinesh_gm`)** |
-| **Shibli** | `iglas_shibli_rec` | EMPLOYEE (Reception) | Main Outlet | `Dev@2026` | **Ahmar Ammar (`main_ahmar_gm`)** |
-| **Birendra Tiwari** | `iglas_birendra_emp` | EMPLOYEE | Main Outlet | `Dev@2026` | **Direct Owner** |
-| **Bablu Canteen** | `iglas_bablu_can` | EMPLOYEE (Canteen) | Main Outlet | `Dev@2026` | **Direct Owner** |
+| **Shibli** | `main_shibli_rec` | EMPLOYEE (Reception) | Main Outlet | `Dev@2026` | **Ahmar Ammar (`main_ahmar_gm`)** |
+| **Birendra Tiwari** | `main_birendra_emp` | EMPLOYEE | Main Outlet | `Dev@2026` | **Direct Owner** |
+| **Bablu Canteen** | `main_bablu_can` | EMPLOYEE (Canteen) | Main Outlet | `Dev@2026` | **Direct Owner** |
 | **Noushad Ahmad** | `It_nausad` | EMPLOYEE (IT) | Main Outlet | `Dev@2026` | **Direct Owner** |
 
 ### 🏎️ Aligarh Nexa
@@ -166,9 +166,9 @@ The expense approval pipeline moves strictly through these discrete states:
 ## 4. Direct Owner Reporting Matrix & Manager Bypass Rules
 
 The following employees **ALWAYS BYPASS LEVEL 1** and route directly to `PENDING_OWNER`:
-1. **Gaurav Sharma (`iglas_gaurav_cashier`)**
-2. **Birendra Tiwari (`iglas_birendra_emp`)**
-3. **Bablu Canteen (`iglas_bablu_can`)**
+1. **Gaurav Sharma (`main_gaurav_cashier`)**
+2. **Birendra Tiwari (`main_birendra_emp`)**
+3. **Bablu Canteen (`main_bablu_can`)**
 4. **Noushad Ahmad (`It_nausad`)**
 5. **Gyanendra Singhle (`main_gyanendra_bsm`)**
 6. **Radha Pal (`main_radha_ccm`)**
@@ -179,7 +179,7 @@ The following employees **ALWAYS BYPASS LEVEL 1** and route directly to `PENDING
 11. **Yogesh Kumar (`atrauli_yogesh_bsm`)**
 12. **Rajendra Dubey (`khair_rajendra_bm`)**
 13. **All Managers (`nexa_stephen_sm`, `main_ahmar_gm`, etc.)**
-14. **All Cashiers (`nexa_shivam_acc`, `iglas_grish_acc`, etc.)**
+14. **All Cashiers (`nexa_shivam_acc`, `main_grish_acc`, `main_gaurav_cashier`, etc.)**
 
 Implementation: `ClaimWorkflowEngine.isDirectOwnerReporting(expense)` in Dart, and `!dbUser.managerId` condition in `expense.controller.ts`.
 
@@ -190,7 +190,7 @@ Implementation: `ClaimWorkflowEngine.isDirectOwnerReporting(expense)` in Dart, a
 In the Main Outlet:
 - **Sales GM (Ahmar Ammar - `main_ahmar_gm`):**
   - Manages Showroom Sales, New Bookings, Vehicle Sales Operations.
-  - Direct subordinate: **Shibli (`iglas_shibli_rec`)**.
+  - Direct subordinate: **Shibli (`main_shibli_rec`)**.
 - **Service GM (Dinesh Sharma - `main_dinesh_gm`):**
   - Manages Bodyshop, Workshop, Mechanical Repairs, Service Center Operations.
   - Direct subordinate: **Sunil Sharma (`main_sunil_spare`)**.
