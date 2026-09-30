@@ -85,7 +85,7 @@ async function main() {
     { id: 'khair_rohit_acc', name: 'Rohit', loc: 'Khair' },
     { id: 'atrauli_sumit_acc', name: 'Sumit', loc: 'Atrauli' },
     { id: 'iglas_grish_acc', name: 'Grish Sharma', loc: 'Iglas' },
-    { id: 'iglas_gaurav_cashier', name: 'Gaurav Sharma (Cashier)', loc: 'Iglas' },
+    { id: 'iglas_gaurav_cashier', name: 'Gaurav Sharma (Cashier)', loc: 'Main Outlet', mgr: null },
   ];
 
   for (const c of cashiers) {
@@ -98,6 +98,7 @@ async function main() {
         password: hashedPassword,
         role: 'CASHIER',
         locationId: locations[c.loc].id,
+        managerId: (c as any).mgr || null,
         status: 'ACTIVE'
       }
     });
@@ -105,22 +106,22 @@ async function main() {
 
   console.log('--- Creating Employees Mapped to Managers ---');
   const employees = [
-    { id: 'nexa_muneesh_bsm', name: 'Muneesh Kumar (BSM)', loc: 'Aligarh Nexa', mgr: 'nexa_stephen_sm' },
-    { id: 'nexa_akash_bsm', name: 'Akash Sharma (BSM)', loc: 'Aligarh Nexa', mgr: 'nexa_stephen_sm' },
-    { id: 'nexa_sunny_spare', name: 'Sunny (Spare Parts)', loc: 'Aligarh Nexa', mgr: 'nexa_dheeraj_wm' },
-    { id: 'nexa_santosh_spare', name: 'Santosh (Spare Parts)', loc: 'Aligarh Nexa', mgr: 'nexa_dheeraj_wm' },
+    { id: 'nexa_muneesh_bsm', name: 'Muneesh Kumar (BSM)', loc: 'Aligarh Nexa', mgr: null },
+    { id: 'nexa_akash_bsm', name: 'Akash Sharma (BSM)', loc: 'Aligarh Nexa', mgr: null },
+    { id: 'nexa_sunny_spare', name: 'Sunny (Spare Parts)', loc: 'Aligarh Nexa', mgr: null },
+    { id: 'nexa_santosh_spare', name: 'Santosh (Spare Parts)', loc: 'Aligarh Nexa', mgr: null },
     
-    { id: 'main_radha_ccm', name: 'Radha Pal (CCM)', loc: 'Main Outlet', mgr: 'main_ahmar_gm' },
-    { id: 'main_gyanendra_bsm', name: 'Gyanendra Singhle (BSM)', loc: 'Main Outlet', mgr: 'main_ahmar_gm' },
+    { id: 'main_radha_ccm', name: 'Radha Pal (CCM)', loc: 'Main Outlet', mgr: null },
+    { id: 'main_gyanendra_bsm', name: 'Gyanendra Singhle (BSM)', loc: 'Main Outlet', mgr: null },
     { id: 'main_sunil_spare', name: 'Sunil Sharma (Spare Parts)', loc: 'Main Outlet', mgr: 'main_dinesh_gm' },
 
-    { id: 'khair_rajendra_bm', name: 'Rajendra Dubey (Bodyshop Mgr)', loc: 'Khair', mgr: 'khair_pankaj_sm' },
+    { id: 'khair_rajendra_bm', name: 'Rajendra Dubey (Bodyshop Mgr)', loc: 'Khair', mgr: null },
 
-    { id: 'atrauli_yogesh_bsm', name: 'Yogesh Kumar (BSM)', loc: 'Atrauli', mgr: 'atrauli_raj_sm' },
+    { id: 'atrauli_yogesh_bsm', name: 'Yogesh Kumar (BSM)', loc: 'Atrauli', mgr: null },
 
-    { id: 'iglas_birendra_emp', name: 'Birendra Tiwari', loc: 'Iglas', mgr: 'iglas_nitesh_sm' },
-    { id: 'iglas_shibli_rec', name: 'Shibli (Receptionist)', loc: 'Iglas', mgr: 'iglas_nitesh_sm' },
-    { id: 'iglas_bablu_can', name: 'Bablu Canteen', loc: 'Iglas', mgr: 'iglas_nitesh_sm' },
+    { id: 'iglas_birendra_emp', name: 'Birendra Tiwari', loc: 'Main Outlet', mgr: null },
+    { id: 'iglas_shibli_rec', name: 'Shibli (Receptionist)', loc: 'Main Outlet', mgr: 'main_ahmar_gm' },
+    { id: 'iglas_bablu_can', name: 'Bablu Canteen', loc: 'Main Outlet', mgr: null },
   ];
 
   for (const e of employees) {

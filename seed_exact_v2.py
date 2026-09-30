@@ -109,7 +109,7 @@ async function main() {{
     {{ id: 'khair_rohit_acc', name: 'Rohit', loc: 'Khair' }},
     {{ id: 'atrauli_sumit_acc', name: 'Sumit', loc: 'Atrauli' }},
     {{ id: 'iglas_grish_acc', name: 'Grish Sharma', loc: 'Iglas' }},
-    {{ id: 'iglas_gaurav_cashier', name: 'Gaurav Sharma', loc: 'Iglas' }},
+    {{ id: 'iglas_gaurav_cashier', name: 'Gaurav Sharma', loc: 'Main Outlet', mgr: null }},
   ];
 
   for (const c of cashiers) {{
@@ -119,6 +119,7 @@ async function main() {{
       email: `${{c.id}}@devmotors.in`,
       role: 'CASHIER',
       locationId: locMap[c.loc],
+      managerId: (c as any).mgr || null,
       status: 'ACTIVE'
     }};
     data['{pass_field}'] = passValue;
@@ -132,18 +133,18 @@ async function main() {{
 
   // 5. Employees Mapped to Specific Managers
   const employees = [
-    {{ id: 'nexa_muneesh_bsm', name: 'Muneesh Kumar', loc: 'Aligarh Nexa', mgr: 'nexa_stephen_sm' }},
-    {{ id: 'nexa_akash_bsm', name: 'Akash Sharma', loc: 'Aligarh Nexa', mgr: 'nexa_stephen_sm' }},
-    {{ id: 'nexa_sunny_spare', name: 'Sunny', loc: 'Aligarh Nexa', mgr: 'nexa_dheeraj_wm' }},
-    {{ id: 'nexa_santosh_spare', name: 'Santosh', loc: 'Aligarh Nexa', mgr: 'nexa_dheeraj_wm' }},
-    {{ id: 'main_radha_ccm', name: 'Radha Pal', loc: 'Main Outlet', mgr: 'main_ahmar_gm' }},
-    {{ id: 'main_gyanendra_bsm', name: 'Gyanendra Singhle', loc: 'Main Outlet', mgr: 'main_ahmar_gm' }},
+    {{ id: 'nexa_muneesh_bsm', name: 'Muneesh Kumar', loc: 'Aligarh Nexa', mgr: null }},
+    {{ id: 'nexa_akash_bsm', name: 'Akash Sharma', loc: 'Aligarh Nexa', mgr: null }},
+    {{ id: 'nexa_sunny_spare', name: 'Sunny', loc: 'Aligarh Nexa', mgr: null }},
+    {{ id: 'nexa_santosh_spare', name: 'Santosh', loc: 'Aligarh Nexa', mgr: null }},
+    {{ id: 'main_radha_ccm', name: 'Radha Pal', loc: 'Main Outlet', mgr: null }},
+    {{ id: 'main_gyanendra_bsm', name: 'Gyanendra Singhle', loc: 'Main Outlet', mgr: null }},
     {{ id: 'main_sunil_spare', name: 'Sunil Sharma', loc: 'Main Outlet', mgr: 'main_dinesh_gm' }},
-    {{ id: 'khair_rajendra_bm', name: 'Rajendra Dubey', loc: 'Khair', mgr: 'khair_pankaj_sm' }},
-    {{ id: 'atrauli_yogesh_bsm', name: 'Yogesh Kumar', loc: 'Atrauli', mgr: 'atrauli_raj_sm' }},
-    {{ id: 'iglas_birendra_emp', name: 'Birendra Tiwari', loc: 'Iglas', mgr: 'iglas_nitesh_sm' }},
-    {{ id: 'iglas_shibli_rec', name: 'Shibli', loc: 'Iglas', mgr: 'iglas_nitesh_sm' }},
-    {{ id: 'iglas_bablu_can', name: 'Bablu Canteen', loc: 'Iglas', mgr: 'iglas_nitesh_sm' }},
+    {{ id: 'khair_rajendra_bm', name: 'Rajendra Dubey', loc: 'Khair', mgr: null }},
+    {{ id: 'atrauli_yogesh_bsm', name: 'Yogesh Kumar', loc: 'Atrauli', mgr: null }},
+    {{ id: 'iglas_birendra_emp', name: 'Birendra Tiwari', loc: 'Main Outlet', mgr: null }},
+    {{ id: 'iglas_shibli_rec', name: 'Shibli', loc: 'Main Outlet', mgr: 'main_ahmar_gm' }},
+    {{ id: 'iglas_bablu_can', name: 'Bablu Canteen', loc: 'Main Outlet', mgr: null }},
   ];
 
   for (const e of employees) {{

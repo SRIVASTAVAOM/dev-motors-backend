@@ -101,17 +101,41 @@ const addExpense = async (req, res) => {
             targetLocationId = firstLoc?.id ?? null;
         }
         // Determine initial status based on creator role:
-        // Manager, Cashier, or users with direct owner approval (e.g. Noushad Ahmad) bypass manager and go directly to OWNER!
+        // Manager, Cashier, or users with direct owner reporting (e.g. Noushad Ahmad, Gaurav Sharma, Birendra, Bablu)
+        // bypass manager and route directly to OWNER!
         let initialStatus = 'PENDING_MANAGER';
         const empIdUpper = (dbUser.employeeId || '').toUpperCase();
         const userNameUpper = (dbUser.name || '').toUpperCase();
         if (dbUser.role === 'MANAGER' ||
             dbUser.role === 'CASHIER' ||
             dbUser.role === 'OWNER' ||
+            !dbUser.managerId ||
             empIdUpper.includes('NAUSAD') ||
             empIdUpper.includes('NOUSHAD') ||
             userNameUpper.includes('NOUSHAD') ||
-            userNameUpper.includes('NAUSAD')) {
+            userNameUpper.includes('NAUSAD') ||
+            empIdUpper.includes('BIRENDRA') ||
+            userNameUpper.includes('BIRENDRA') ||
+            empIdUpper.includes('BABLU') ||
+            userNameUpper.includes('BABLU') ||
+            empIdUpper.includes('GAURAV_CASHIER') ||
+            empIdUpper.includes('GYANENDRA') ||
+            userNameUpper.includes('GYANENDRA') ||
+            empIdUpper.includes('RADHA') ||
+            userNameUpper.includes('RADHA') ||
+            empIdUpper.includes('SANTOSH') ||
+            userNameUpper.includes('SANTOSH') ||
+            empIdUpper.includes('SUNNY') ||
+            userNameUpper.includes('SUNNY') ||
+            empIdUpper.includes('MUNEESH') ||
+            userNameUpper.includes('MUNEESH') ||
+            empIdUpper.includes('AKASH') ||
+            userNameUpper.includes('AKASH') ||
+            empIdUpper.includes('YOGESH') ||
+            userNameUpper.includes('YOGESH') ||
+            empIdUpper.includes('RAJENDRA') ||
+            userNameUpper.includes('RAJENDRA') ||
+            (userNameUpper.includes('GAURAV') && empIdUpper !== 'OWNER_GAURAV_SHARMA')) {
             initialStatus = 'PENDING_OWNER';
         }
         const effectiveReceiptUrl = receiptUrl || req.body.receiptImage || 'https://devmotors-assets.s3.amazonaws.com/receipts/bill.png';

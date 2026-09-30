@@ -70,35 +70,33 @@ async function main() {
     { id: 'iglas_nitesh_sm', name: 'Nitesh Pal', email: 'iglas_nitesh_sm@devmotors.in', role: 'MANAGER', loc: 'Iglas' },
     { id: 'iglas_rahul_wm', name: 'Rahul', email: 'iglas_rahul_wm@devmotors.in', role: 'MANAGER', loc: 'Iglas' },
     { id: 'iglas_grish_acc', name: 'Grish Sharma', email: 'iglas_grish_acc@devmotors.in', role: 'CASHIER', loc: 'Iglas' },
-    { id: 'iglas_gaurav_cashier', name: 'Gaurav Sharma', email: 'iglas_gaurav_cashier@devmotors.in', role: 'CASHIER', loc: 'Iglas' },
-    { id: 'iglas_birendra_emp', name: 'Birendra Tiwari', email: 'iglas_birendra_emp@devmotors.in', role: 'EMPLOYEE', loc: 'Iglas' },
-    { id: 'iglas_shibli_rec', name: 'Shibli', email: 'iglas_shibli_rec@devmotors.in', role: 'EMPLOYEE', loc: 'Iglas' },
-    { id: 'iglas_bablu_can', name: 'Bablu Canteen', email: 'iglas_bablu_can@devmotors.in', role: 'EMPLOYEE', loc: 'Iglas' },
+    { id: 'iglas_gaurav_cashier', name: 'Gaurav Sharma', email: 'iglas_gaurav_cashier@devmotors.in', role: 'CASHIER', loc: 'Main Outlet', mgr: null },
+    { id: 'iglas_birendra_emp', name: 'Birendra Tiwari', email: 'iglas_birendra_emp@devmotors.in', role: 'EMPLOYEE', loc: 'Main Outlet', mgr: null },
+    { id: 'iglas_shibli_rec', name: 'Shibli', email: 'iglas_shibli_rec@devmotors.in', role: 'EMPLOYEE', loc: 'Main Outlet', mgr: 'main_ahmar_gm' },
+    { id: 'iglas_bablu_can', name: 'Bablu Canteen', email: 'iglas_bablu_can@devmotors.in', role: 'EMPLOYEE', loc: 'Main Outlet', mgr: null },
   ];
 
   let seededCount = 0;
   for (const u of users) {
     const locId = u.loc ? locMap[u.loc] : null;
 
+    const data = {
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      locationId: locId,
+      ...(u.mgr ? { managerId: u.mgr } : {}),
+      passwordHash: passwordHash,
+      status: 'ACTIVE',
+    };
+
     await prisma.user.upsert({
       where: { employeeId: u.id },
-      update: {
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        locationId: locId,
-        passwordHash: passwordHash,
-        status: 'ACTIVE',
-      },
+      update: data,
       create: {
         id: u.id,
         employeeId: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        locationId: locId,
-        passwordHash: passwordHash,
-        status: 'ACTIVE',
+        ...data,
       },
     });
     seededCount++;
